@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% load mezzanine_tags rating_tags %}
+
+{% block content %}
+
+{% for post in posts_list %}
+<div>
+	{% rating_for post.parent %}
+	
+    <h2>{{ post.type }} - <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+    {{ post.get_last_author|safe }} |
+    {{ post.category.name }}<br /><br />
+    <a class="comments" href="{{ post.get_absolute_url }}">{{ post.comments_count }} comment{{ post.comments_count|pluralize }} </a>
+</div>
+{% endfor %}
+
+{% endblock %}

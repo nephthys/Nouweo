@@ -1,0 +1,19 @@
+{% load mezzanine_tags rating_tags i18n %}
+
+<div class="rating">
+    <form method="post" action="{% url "rating" %}" style="display: none;">
+        {% fields_for rating_form %}
+    </form>
+
+    <span class="arrows">
+        <a href="#"><i class="icon icon-arrow-up">up</i></a>
+        <a href="#"><i class="icon icon-arrow-down">down</i></a>
+    </span>
+
+    <span class="score">
+        {% with rating_obj.comments_count|default:0 as comments_count %}
+        {{ rating_sum }}
+        {% endwith %}
+    </span>
+
+</div>

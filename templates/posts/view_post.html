@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load mezzanine_tags rating_tags keyword_tags comment_tags posts_tags %}
+{% load i18n %}
+
+{% block content %}
+
+<h2>{{ post.type }} - <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+
+{{ post.last_content_html|safe }}
+
+{% keywords_for post as keywords %}
+{% for keyword in keywords %}
+	{{ keyword.title }}
+{% endfor %}
+
+{% order_comments_by_score_for post %}
+{% comments_for post %}
+
+{% endblock content %}

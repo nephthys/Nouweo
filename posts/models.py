@@ -1,0 +1,150 @@
+#!/usr/bin/env python
+#-*- encoding: utf-8 -*-
+"""
+Copyright (c) 2013 Camille "nephthys" Bouiller <camille@nouweo.com>
+
+Nouweo is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+from django import forms
+from django.db import models
+from django.contrib.auth.models import User
+from django.forms import ModelForm
+from django.template.defaultfilters import slugify
+from django.utils.translation import ugettext as _
+
+from model_utils.managers import InheritanceManager
+
+from mezzanine.generic.models import Rating
+from mezzanine.generic.fields import RatingField, CommentsField, KeywordsField
+
+import datetime
+
+class PostType(models.Model):
+    CHOICE_STATUS = (
+        (0, _('offline')),
+        (1, _('writing')),
+        (2, _('pending')),
+        (3, _('online')),
+    )
+    title = models.CharField(max_length=150, blank=False, null=False)
+    slug = models.SlugField(unique=True, max_length=150, null=True, blank=True)
+    category = models.ForeignKey('Category', verbose_name=_('category'))
+    created_at = models.DateTimeField(_('created date'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('last update'), auto_now=True)
+    published_at = models.DateTimeField(_('published date'), null=True,
+        blank=True)
+    status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
+    is_closed_com = models.BooleanField(_('closed comments'), default=False)
+    nb_views = models.IntegerField(_('number views'), default=0)
+    last_content = models.TextField(editable=False, null=True, blank=True)
+    last_content_html = models.TextField(editable=False, null=True, blank=True)
+    ip = models.IPAddressField(_('IP adress'))
+    rating = RatingField()
+    comments = CommentsField()
+    keywords = KeywordsField()
+    
+    objects = InheritanceManager()
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return ('post_view', (self.category.slug, self.slug,))
+        
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            slug = slugify(self.title)
+            
+            while True:
+                posts_count = PostType.objects.filter(slug=slug).count()
+                if posts_count == 0:
+                    break
+                slug = '%s-%d' % (slug, (posts_count+1))
+
+            self.slug = slug
+        
+        if self.last_content:
+            import markdown
+            self.last_content_html = markdown.markdown(self.last_content)
+            
+        super(PostType, self).save(*args, **kwargs)
+            
+class News(PostType):
+    parent = models.OneToOneField(PostType, parent_link=True)
+    last_version = models.ForeignKey('Version', related_name='last_version',
+        on_delete=models.SET_NULL, null=True, blank=True)
+    nb_versions = models.PositiveSmallIntegerField(default=1)
+    is_short = models.BooleanField(_('is brief'), default=False)
+    
+    @property
+    def type(self):
+        return 'news'
+        
+    def get_last_author(self):
+        return '<a href="%s">%s</a>' % (
+            self.last_version.author.get_absolute_url(), 
+            self.last_version.author.username)
+    
+class Version(models.Model):
+    news = models.ForeignKey(News)
+    author = models.ForeignKey(User)
+    number = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now=True)
+    content = models.TextField()
+    content_html = models.TextField(blank=True)
+    reason = models.CharField(max_length=100, blank=True)
+    is_minor = models.BooleanField(_('small contribution'), default=False)
+    ip = models.IPAddressField(_('IP adress'))
+    nb_chars = models.PositiveSmallIntegerField(default=0)
+    diff_chars = models.SmallIntegerField(default=0)
+    
+    def save(self):
+        import markdown
+        self.content_html = markdown.markdown(self.content)
+        super(Version, self).save()
+        
+class Picture(PostType):
+    parent = models.OneToOneField(PostType, parent_link=True)
+    picture = models.ImageField(upload_to='pictures')
+    comment = models.TextField()
+    comment_html = models.TextField(blank=True)
+    
+    @property
+    def type(self):
+        return 'picture'
+    
+class Category(models.Model):
+    name = models.CharField(_('name'), max_length=150, blank=False, null=False)
+    slug = models.SlugField(_('slug'), unique=True)
+    
+    def __unicode__(self):
+        return self.name
+        
+class NewsForm(ModelForm):
+    CHOICE_TYPE = (
+        (0, _('news')),
+        (1, _('brief'))
+    )
+    
+    is_short = forms.BooleanField(label=_('Type'), required=False, 
+        widget=forms.RadioSelect(choices=CHOICE_TYPE))
+    content_news = forms.CharField(label=_('Content'), 
+        help_text=_('Write with markdown'),
+        widget=forms.Textarea(attrs={'class':'content_area'}))
+    reason = forms.CharField(label=_('Reason'))
+    is_minor = forms.BooleanField(label=_('Small contribution'), required=False)
+    
+    class Meta:
+        model = News
+        fields = ['is_short', 'title', 'content_news', 'reason', 'category', 
+                  'is_minor', 'status', 'is_closed_com']
