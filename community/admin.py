@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.contrib import admin
 from models import *
 
-admin.site.register(News)
-admin.site.register(Version)
-admin.site.register(Category)
-admin.site.register(Picture)
+admin.site.register(User)
+admin.site.register(KarmaAction)
+admin.site.register(KarmaChange)

@@ -2,6 +2,7 @@
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+TESTING = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -65,7 +66,7 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = ''
+STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -114,7 +115,6 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -125,12 +125,17 @@ INSTALLED_APPS = (
     'mezzanine.core',
     'mezzanine.generic',
     'posts',
+    'community',
 )
+
+COMMENTS_APP = 'mezzanine.generic'
+AUTH_USER_MODEL = 'community.User'
 
 RATINGS_RANGE = (-1, 1)
 RATINGS_ACCOUNT_REQUIRED = True
 COMMENTS_ACCOUNT_REQUIRED = True
 
+GRAPPELLI_INSTALLED = False
 PACKAGE_NAME_FILEBROWSER = 'filebrowser_safe'
 PACKAGE_NAME_GRAPPELLI = 'grappelli_safe'
 
@@ -162,10 +167,3 @@ LOGGING = {
         },
     }
 }
-
-try:
-    from mezzanine.utils.conf import set_dynamic_settings
-except ImportError:
-    pass
-else:
-    set_dynamic_settings(globals())

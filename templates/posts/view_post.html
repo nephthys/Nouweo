@@ -13,7 +13,7 @@
 	{{ keyword.title }}
 {% endfor %}
 
-{% order_comments_by_score_for post %}
-{% comments_for post %}
+{% order_comments_by_score_for post.parent %}
+{% comments_for post.parent %}
 
 {% endblock content %}

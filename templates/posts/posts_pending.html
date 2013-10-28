@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load mezzanine_tags rating_tags %}
+
+{% block content %}
+
+<h3>{% trans "almost published" %}</h3>
+<!-- #TODO -->
+
+<h3>{% trans "last comments" %}</h3>
+{% if last_comments %}
+<ul>
+	{% for comment in last_comments %}
+		<li>{{ comment.user_name }} -- {{ comment.comment }}</li>
+	{% endfor %}
+</ul>
+{% endif %}
+
+<h3>{% trans "most active users" %}</h3>
+
+{% if best_voters %}
+<ul>
+    {% for vote in best_voters %}
+    <li>{{ vote.user.username }} - {% blocktrans count vote.num_votes as votes %}{{ votes }} vote{% plural %}{{ votes }} votes{% endblocktrans %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% for post in posts_list %}
+<div>
+    <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+</div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+
+{{ diff|safe }}
+
+<table>
+<thead>	
+<tr>		
+    <th class="row1">{% trans "Number" %}</th>		
+    {% if nb_revisions > 1 %}<th class="row1"></th>{% endif %}
+    <th class="row4">{% trans "Date" %}</th>
+    <th class="row4">{% trans "Author" %}</th>
+    <th>{% trans "Reason" %}</th>
+    <th></th>
+    <th></th>
+    <th class="row2">{% trans "IP" %}</th>
+    <th class="row4">{% trans "Actions" %}</th>
+</tr>	
+</thead>
+<tbody>
+{% for revision in post_revisions %}
+<tr>
+    <td>{{ revision.number }}</td>
+    {% if nb_revisions > 1 %}<td>
+        <input name="rev_old" type="radio" value="{{ revision.id }}" />
+        <input name="rev_new" type="radio" value="{{ revision.id }}" />
+    </td>{% endif %}
+    <td>{{ revision.created_at }}</td>
+    <td>{{ revision.author.username }}</td>
+    <td>{{ revision.reason }}</td>
+    <td>{{ revision.nb_chars }}</td>
+    <td>{% if revision.diff_chars > 0 %}+{% endif %}{{ revision.diff_chars }}</td>
+    <td>{{ revision.ip }}</td>
+    <td></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock content %}

@@ -1,13 +1,19 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+{% load staticfiles i18n %}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <title>Nouweo</title>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-        <script src="{{ STATIC_URL }}js/common.js"></script>
+        <script src="{% static "js/common.js" %}"></script>
     </head>
     <body>
     
+	<ul id="navigation">
+		<li><a href="{% url "home" %}">{% trans "home" %}</a></li>
+		<li><a href="{% url "posts_draft" %}">{% trans "draft" %}</a></li>
+		<li><a href="{% url "posts_pending" %}">{% trans "pending" %}</a></li>
+	</ul>
+	
     {% block content %}{% endblock %}
     
     </body>

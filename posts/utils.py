@@ -7,18 +7,19 @@ Nouweo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
 published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.
- 
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
- 
+
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
 from django.utils.timezone import now
+
 
 def order_by_score(queryset, score_fields, date_field, reverse=True):
     """
@@ -29,7 +30,7 @@ def order_by_score(queryset, score_fields, date_field, reverse=True):
     support a POW function, which Postgres and MySQL do. For databases
     that don't such as SQLite, we perform the scoring/sorting in
     memory, which will suffice for development.
-    
+
     Source : https://github.com/stephenmcd/drum/blob/master/main/utils.py
     """
 
@@ -40,7 +41,7 @@ def order_by_score(queryset, score_fields, date_field, reverse=True):
     # are available for the DB backend.
     timestamp_sqls = {
         "mysql": "UNIX_TIMESTAMP(%s)",
-        "postgresql_psycopg2": "EXTRACT(EPOCH FROM %s)" ,
+        "postgresql_psycopg2": "EXTRACT(EPOCH FROM %s)",
     }
     db_engine = settings.DATABASES[queryset.db]["ENGINE"].rsplit(".", 1)[1]
     timestamp_sql = timestamp_sqls.get(db_engine)
