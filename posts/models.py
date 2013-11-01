@@ -19,10 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
 from django.db import models
+from django.db.models.signals import post_save
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.forms import ModelForm
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
+import django.dispatch
 
 from model_utils.managers import InheritanceManager
 
@@ -43,28 +46,53 @@ class PostType(models.Model):
     slug = models.SlugField(unique=True, max_length=150, null=True, blank=True)
     category = models.ForeignKey('Category', verbose_name=_('category'))
     created_at = models.DateTimeField(_('created date'), auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   related_name='user_created',
+                                   null=True, blank=True)
     updated_at = models.DateTimeField(_('last update'), auto_now=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   related_name='user_updated',
+                                   null=True, blank=True)
     published_at = models.DateTimeField(_('published date'), null=True,
                                         blank=True)
+    published_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   related_name='user_published',
+                                   null=True, blank=True)
     status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
-    is_closed_com = models.BooleanField(_('closed comments'), default=False)
-    nb_views = models.IntegerField(_('number views'), default=0)
+    closed_comments = models.BooleanField(_('closed comments'), default=False)
+    views_count = models.IntegerField(_('number views'), default=0)
     last_content = models.TextField(editable=False, null=True, blank=True)
     last_content_html = models.TextField(editable=False, null=True, blank=True)
-    last_author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                                    blank=True)
     ip = models.IPAddressField(_('IP adress'))
+    
     rating = RatingField()
     comments = CommentsField()
     keywords = KeywordsField()
 
     objects = InheritanceManager()
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('post_view', (self.category.slug, self.slug,))
+        return reverse('post_view', kwargs={'cat': self.category.slug, 
+                                            'slug': self.slug})
+
+    def get_absolute_url_edit(self):
+        if self.type is 'news':
+            return reverse('edit_news', kwargs={'id': self.id})
+
+    def get_first_author(self):
+        return '<a href="%s">%s</a>' % (
+            self.created_by.get_absolute_url(),
+            self.created_by.username)
+
+    def get_last_author(self):
+        if self.updated_by:
+            return '<a href="%s">%s</a>' % (
+                self.updated_by.get_absolute_url(),
+                self.updated_by.username)
 
     def save(self, *args, **kwargs):
+        is_published = False
+
         if not self.slug:
             slug = slugify(self.title)
 
@@ -76,19 +104,34 @@ class PostType(models.Model):
 
             self.slug = slug
 
+        if not self.pk:
+            if self.status == 3:
+                is_published = True
+        else:
+            old = PostType.objects.get(pk=self.pk)
+
+            if old.status != self.status and self.status == 3:
+                is_published = True
+
         if self.last_content:
             import markdown
             self.last_content_html = markdown.markdown(self.last_content)
+            
+        if not self.published_at and is_published:
+            self.published_at = datetime.datetime.now()
 
         super(PostType, self).save(*args, **kwargs)
-
+        
+        if self.pk and is_published:
+            from community.karma import karma_post_published
+            karma_post_published(self.pk)
 
 class News(PostType):
     parent = models.OneToOneField(PostType, parent_link=True)
     last_version = models.ForeignKey('Version', related_name='last_version',
                                      null=True, blank=True,
                                      on_delete=models.SET_NULL)
-    nb_versions = models.PositiveSmallIntegerField(default=0)
+    versions_count = models.PositiveSmallIntegerField(default=0)
     is_short = models.BooleanField(_('is brief'), default=False)
 
     @property
@@ -105,11 +148,6 @@ class News(PostType):
                                                  author.username))
         return show_first_items(list)
 
-    def get_last_author(self):
-        return '<a href="%s">%s</a>' % (
-            self.last_version.author.get_absolute_url(),
-            self.last_version.author.username)
-
 
 class Version(models.Model):
     news = models.ForeignKey(News, related_name='versions')
@@ -121,8 +159,8 @@ class Version(models.Model):
     reason = models.CharField(max_length=100, blank=True)
     is_minor = models.BooleanField(_('small contribution'), default=False)
     ip = models.IPAddressField(_('IP adress'))
-    nb_chars = models.PositiveSmallIntegerField(default=0)
-    diff_chars = models.SmallIntegerField(default=0)
+    chars_count = models.PositiveSmallIntegerField(default=0)
+    chars_diff = models.SmallIntegerField(default=0)
 
     def save(self):
         import markdown
@@ -174,24 +212,26 @@ class Idea(models.Model):
     status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
     ip = models.IPAddressField(_('IP adress'))
     rating = RatingField()
+    
+    def get_absolute_url(self):
+        return '%s?idea_id=%d' % (reverse('posts_draft'), self.id)
 
 
 class IdeaForm(ModelForm):
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        self.ip = kwargs.pop('ip', None)
+        self.request = kwargs.pop('request', None)
         super(IdeaForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
         idea = super(IdeaForm, self).save(commit=False)
         if not self.instance.pk:
-            if self.user:
-                idea.created_by = self.user
-            if self.ip:
-                idea.ip = self.ip
+            if self.request.user:
+                idea.created_by = self.request.user
+            if self.request.META['REMOTE_ADDR']:
+                idea.ip = self.request.META['REMOTE_ADDR']
         else:
-            if self.user:
-                idea.updated_by = self.user
+            if self.request.user:
+                idea.updated_by = self.request.user
 
             idea.updated_at = datetime.datetime.now()
         idea.save()
@@ -219,30 +259,34 @@ class NewsForm(ModelForm):
                                   required=False)
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        self.ip = kwargs.pop('ip', None)
+        self.request = kwargs.pop('request', None)
         super(NewsForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
         content = self.cleaned_data.get('content_news', '')
         is_short = self.cleaned_data.get('is_short')
         is_minor = self.cleaned_data.get('is_minor')
+        ip = self.request.META['REMOTE_ADDR']
 
         news = super(NewsForm, self).save(commit=False)
         news.is_short = is_short
         news.last_content = content
-        news.last_author = self.user
-        news.ip = self.ip
+        news.ip = ip
+        if self.request.user:
+            if not self.instance.pk:
+                news.created_by = self.request.user
+            else:
+                news.updated_by = self.request.user
         news.save()
 
         if not is_short:
-            version = Version(news=news, author=self.user, ip=self.ip,
+            version = Version(news=news, author=self.request.user, ip=ip,
                               content=content, is_minor=is_minor,
-                              nb_chars=len(content))
+                              chars_count=len(content))
             version.save()
 
             news.last_version = version
-            news.nb_versions += 1
+            news.versions_count += 1
 
         news.save()
 
@@ -251,4 +295,4 @@ class NewsForm(ModelForm):
     class Meta:
         model = News
         fields = ['is_short', 'title', 'content_news', 'reason', 'category',
-                  'is_minor', 'status', 'is_closed_com']
+                  'is_minor', 'status', 'closed_comments']

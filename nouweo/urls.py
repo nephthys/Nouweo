@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     ('^', include('mezzanine.urls')),
 
     url(r'^add/news/$', add_news, name='add_news'),
+    url(r'^edit/news/(?P<id>\d+)/$', edit_news, name='edit_news'),
     url(r'^posts/draft/$', view_posts_draft, name='posts_draft'),
     url(r'^posts/pending/$', view_posts_pending, name='posts_pending'),
     url(r'^posts/propose/(?P<post_id>\d+)/$', post_propose,

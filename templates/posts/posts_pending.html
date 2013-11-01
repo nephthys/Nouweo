@@ -30,6 +30,7 @@
 {% for post in posts_list %}
 <div>
     <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+	{% rating_for post.parent %}
 </div>
 {% endfor %}
 

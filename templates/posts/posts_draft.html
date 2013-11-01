@@ -13,12 +13,14 @@
     <li>
         <strong>{{ idea.title }}</strong> {{ idea.content|linebreaksbr }}
         <a href="{% url "posts_draft" %}?idea_id={{ idea.id }}">{% trans "edit" %}</a>
+		
+		{% rating_for idea %}
     </li>
     {% endfor %}
 </ul>
 {% endif %}
 
-<form action="{% url "posts_draft" %}{% if idea_id %}?idea_id={{ idea_id }}{% endif %}" method="post" style="display: none;">
+<form action="{% url "posts_draft" %}{% if idea_id %}?idea_id={{ idea_id }}{% endif %}" method="post">
     {{ form.as_p }}
     {% csrf_token %}
     <p><input type="submit" name="submit" value="{% if idea_id %}{% trans "update" %}{% else %}{% trans "add" %}{% endif %}" /></p>
@@ -53,7 +55,7 @@
 	{% endif %}
     
     -- <a href="{% url "post_propose" post.id %}">{% trans "propose" %}</a>
-    -- <a href="">{% trans "contribute" %}</a>
+    -- <a href="{{ post.get_absolute_url_edit }}">{% trans "contribute" %}</a>
 </div>
 {% endfor %}
 

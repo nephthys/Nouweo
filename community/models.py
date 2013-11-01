@@ -31,12 +31,24 @@ class User(AbstractUser):
     thumbs_down = models.IntegerField(default=0)
     thumbs_ratio = models.IntegerField(default=0)
     location = models.CharField(max_length=150, null=True, blank=True)
+    
+    subscribe_newsletter = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    def change_karma(self, action_id, content_type=None, object_id=None):
+    def change_karma(self, action_id, **kwargs):
         try:
             action = KarmaAction.objects.get(identifier=action_id)
+            
+            content_type = kwargs.pop('content_type', None)
+            object_id = kwargs.pop('object_id', None)
+            
+            if content_type is None and object_id is None:
+                obj = kwargs.pop('obj', None)
+
+                content_type = ContentType.objects.get_for_model(obj)
+                object_id = obj.pk
+                
             karma = KarmaChange.objects.filter(user=self,
                                                content_type=content_type,
                                                object_id=object_id)

@@ -139,6 +139,11 @@ GRAPPELLI_INSTALLED = False
 PACKAGE_NAME_FILEBROWSER = 'filebrowser_safe'
 PACKAGE_NAME_GRAPPELLI = 'grappelli_safe'
 
+# NW Specifics
+
+NOUWEO_POS_VOTES_TO_PUBLISH_POST = 30
+NOUWEO_NEG_VOTES_TO_PUBLISH_POST = -30
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error when DEBUG=False.

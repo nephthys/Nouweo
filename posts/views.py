@@ -62,8 +62,7 @@ def view_posts_draft(request):
         idea = get_object_or_404(Idea, pk=idea_id)
 
     if request.method == 'POST':
-        form = IdeaForm(request.POST, instance=idea, user=request.user,
-                        ip=request.META['REMOTE_ADDR'])
+        form = IdeaForm(request.POST, instance=idea, request=request)
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('posts_draft'))
@@ -100,11 +99,12 @@ def view_posts_pending(request):
                                          'news__last_version__author') \
                          .select_subclasses()
 
-    ctype = ContentType.objects.get_for_model(PostType)
-    best_voters = Rating.objects.filter(content_type=ctype) \
+    post_ctype = ContentType.objects.get_for_model(PostType)
+
+    best_voters = Rating.objects.filter(content_type=post_ctype) \
         .annotate(num_votes=Count('user')).order_by('-num_votes')[:10]
 
-    last_comments = ThreadedComment.objects.filter(content_type=ctype) \
+    last_comments = ThreadedComment.objects.filter(content_type=post_ctype) \
         .select_related().order_by('-submit_date')[:10]
 
     return render(request, 'posts/posts_pending.html', {
@@ -176,7 +176,7 @@ def delete_revision(request, cat, slug, revision):
             news.last_version = prev_rev
 
         rev.delete()
-        news.nb_versions -= 1
+        news.versions_count -= 1
         news.save()
 
     return HttpResponseRedirect(reverse('post_revisions',
@@ -195,13 +195,34 @@ def post_propose(request, post_id):
 @login_required
 def add_news(request):
     if request.method == 'POST':
-        form = NewsForm(request.POST, request.FILES, user=request.user,
-                        ip=request.META['REMOTE_ADDR'])
+        form = NewsForm(request.POST, request.FILES, request=request)
         if form.is_valid():
             news = form.save()
             return HttpResponseRedirect(news.get_absolute_url())
     else:
         initial = {'reason': _('First version')}
-        form = NewsForm(initial=initial)
+        from django.forms.models import modelform_factory
+        form = modelform_factory(News, form=NewsForm, exclude=('status'))
+        # form = NewsForm(initial=initial)
 
     return render(request, 'posts/add_news.html', {'form': form})
+
+
+@login_required
+def edit_news(request, id):
+    news = get_object_or_404(News, pk=id)
+
+    if request.method == 'POST':
+        form = NewsForm(request.POST, request.FILES, instance=news,
+                        request=request)
+        if form.is_valid():
+            news = form.save()
+            return HttpResponseRedirect(news.get_absolute_url())
+    else:
+        initial = {'is_short': int(news.is_short), 'title': news.title, \
+        'content_news': news.last_content, 'category': news.category, \
+        'status': news.status, 'closed_comments': news.closed_comments}
+        
+        form = NewsForm(instance=news, initial=initial)
+
+    return render(request, 'posts/add_news.html', {'id': id, 'form': form})

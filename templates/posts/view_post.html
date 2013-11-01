@@ -8,6 +8,8 @@
 
 {{ post.last_content_html|safe }}
 
+<a href="{{ post.get_absolute_url_edit }}">edit</a>
+
 {% keywords_for post as keywords %}
 {% for keyword in keywords %}
 	{{ keyword.title }}

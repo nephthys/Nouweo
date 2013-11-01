@@ -1,3 +1,22 @@
+#!/usr/bin/env python
+#-*- encoding: utf-8 -*-
+"""
+Copyright (c) 2013 Camille "nephthys" Bouiller <camille@nouweo.com>
+
+Nouweo is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from django.contrib.auth import get_user_model
 from django.contrib.comments.models import Comment
 from django.contrib.contenttypes.models import ContentType
@@ -12,23 +31,14 @@ from models import KarmaAction, KarmaChange
 
 @receiver(post_save, sender=Rating)
 def new_rating(sender, instance, signal, created, **kwargs):
-    if isinstance(instance.content_object, ThreadedComment)
+    if isinstance(instance.content_object, ThreadedComment) \
     and isinstance(instance.content_object.content_object, PostType):
-        try:
-            user = get_user_model().objects.get(pk=instance.user.id)
 
-            object_id = instance.content_object.id
-            post = instance.content_object.content_object
+        from community.karma import karma_rating_comment_published
+        karma_rating_comment_published(instance)
 
-            if post.status == 3:
-                if int(instance.value) > 0:
-                    action_id = 'post_positive_comment'
-                else:
-                    action_id = 'post_negative_comment'
+    elif isinstance(instance.content_object, PostType):
 
-                output = user.change_karma(action_id,
-                                           content_type=instance.content_type,
-                                           object_id=object_id)
+        from community.karma import karma_rating_post
+        karma_rating_post(instance)
 
-        except KarmaAction.DoesNotExist:
-            pass
