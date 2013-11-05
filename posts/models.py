@@ -21,16 +21,17 @@ from django import forms
 from django.db import models
 from django.db.models.signals import post_save
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.forms import ModelForm
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
-import django.dispatch
+from django.dispatch import Signal
 
 from model_utils.managers import InheritanceManager
 
-from mezzanine.generic.models import Rating
-from mezzanine.generic.fields import RatingField, CommentsField, KeywordsField
+from mezzanine.generic.fields import CommentsField, KeywordsField
+from community.fields import RatingField
 
 import datetime
 
@@ -56,23 +57,23 @@ class PostType(models.Model):
     published_at = models.DateTimeField(_('published date'), null=True,
                                         blank=True)
     published_by = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                   related_name='user_published',
-                                   null=True, blank=True)
+                                     related_name='user_published',
+                                     null=True, blank=True)
     status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
     closed_comments = models.BooleanField(_('closed comments'), default=False)
     views_count = models.IntegerField(_('number views'), default=0)
     last_content = models.TextField(editable=False, null=True, blank=True)
     last_content_html = models.TextField(editable=False, null=True, blank=True)
     ip = models.IPAddressField(_('IP adress'))
-    
-    rating = RatingField()
+
+    rating = RatingField(count_status='status')
     comments = CommentsField()
     keywords = KeywordsField()
 
     objects = InheritanceManager()
 
     def get_absolute_url(self):
-        return reverse('post_view', kwargs={'cat': self.category.slug, 
+        return reverse('post_view', kwargs={'cat': self.category.slug,
                                             'slug': self.slug})
 
     def get_absolute_url_edit(self):
@@ -92,6 +93,7 @@ class PostType(models.Model):
 
     def save(self, *args, **kwargs):
         is_published = False
+        status_changed = False
 
         if not self.slug:
             slug = slugify(self.title)
@@ -110,21 +112,33 @@ class PostType(models.Model):
         else:
             old = PostType.objects.get(pk=self.pk)
 
-            if old.status != self.status and self.status == 3:
-                is_published = True
+            if old.status != self.status:
+                status_changed = True
+
+                if self.status == 3:
+                    is_published = True
 
         if self.last_content:
             import markdown
             self.last_content_html = markdown.markdown(self.last_content)
-            
+
         if not self.published_at and is_published:
             self.published_at = datetime.datetime.now()
 
         super(PostType, self).save(*args, **kwargs)
-        
+
+        if self.pk and status_changed:
+            obj = self
+            if hasattr(self, 'parent'):
+                obj = self.parent
+            output = obj.rating.update_count(commit=False)
+            self.__dict__.update(output)
+            super(PostType, self).save(*args, **kwargs)
+
         if self.pk and is_published:
             from community.karma import karma_post_published
             karma_post_published(self.pk)
+
 
 class News(PostType):
     parent = models.OneToOneField(PostType, parent_link=True)
@@ -211,8 +225,8 @@ class Idea(models.Model):
     completed_post = models.ForeignKey(PostType, null=True, blank=True)
     status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
     ip = models.IPAddressField(_('IP adress'))
-    rating = RatingField()
-    
+    rating = RatingField(count_status='status')
+
     def get_absolute_url(self):
         return '%s?idea_id=%d' % (reverse('posts_draft'), self.id)
 

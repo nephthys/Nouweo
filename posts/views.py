@@ -202,8 +202,8 @@ def add_news(request):
     else:
         initial = {'reason': _('First version')}
         from django.forms.models import modelform_factory
-        form = modelform_factory(News, form=NewsForm, exclude=('status'))
-        # form = NewsForm(initial=initial)
+        # form = modelform_factory(News, form=NewsForm, exclude=('status'))
+        form = NewsForm(initial=initial)
 
     return render(request, 'posts/add_news.html', {'form': form})
 
@@ -219,10 +219,11 @@ def edit_news(request, id):
             news = form.save()
             return HttpResponseRedirect(news.get_absolute_url())
     else:
-        initial = {'is_short': int(news.is_short), 'title': news.title, \
-        'content_news': news.last_content, 'category': news.category, \
-        'status': news.status, 'closed_comments': news.closed_comments}
-        
+        initial = {'is_short': int(news.is_short), 'title': news.title,
+                   'content_news': news.last_content,
+                   'category': news.category, 'status': news.status,
+                   'closed_comments': news.closed_comments}
+
         form = NewsForm(instance=news, initial=initial)
 
     return render(request, 'posts/add_news.html', {'id': id, 'form': form})

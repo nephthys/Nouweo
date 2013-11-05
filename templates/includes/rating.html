@@ -1,0 +1,23 @@
+<div class="rating">
+	<span class="arrows">
+		{% if rating_obj.has_voted %}
+		<span{% if rating_obj.user_vote == 1 %} class="selected"{% endif %}>
+			{{ rating_obj.rating_likes }}
+			<i class="icon icon-arrow-up">up</i>
+		</span>
+		<span{% if rating_obj.user_vote == -1 %} class="selected"{% endif %}>
+			{{ rating_obj.rating_dislikes }}
+			<i class="icon icon-arrow-down">down</i>
+		</span>
+		{% else %}
+		<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="up" %}">
+			{{ rating_obj.rating_likes }}
+			<i class="icon icon-arrow-up">up</i>
+		</a>
+		<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="down" %}">
+			{{ rating_obj.rating_dislikes }}
+			<i class="icon icon-arrow-down">down</i>
+		</a>
+		{% endif %}
+	</span>
+</div>

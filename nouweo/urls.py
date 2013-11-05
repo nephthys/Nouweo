@@ -4,6 +4,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 from posts.views import *
+from community.views import *
 
 urlpatterns = patterns('',
     url(r'^$', homepage, name='home'),
@@ -17,6 +18,9 @@ urlpatterns = patterns('',
     url(r'^posts/pending/$', view_posts_pending, name='posts_pending'),
     url(r'^posts/propose/(?P<post_id>\d+)/$', post_propose,
         name='post_propose'),
+        
+    url(r'^rating/(?P<model>post|idea|comment)/(?P<id>\d+)/(?P<direction>up|down)/$', add_vote,
+        name='add_vote'),
 
     url(r'^(?P<cat>[\-\d\w]+)/(?P<slug>[\-\d\w]+)/$', view_post,
         name='post_view'),

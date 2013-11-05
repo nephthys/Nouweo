@@ -13,8 +13,6 @@
     <li>
         <strong>{{ idea.title }}</strong> {{ idea.content|linebreaksbr }}
         <a href="{% url "posts_draft" %}?idea_id={{ idea.id }}">{% trans "edit" %}</a>
-		
-		{% rating_for idea %}
     </li>
     {% endfor %}
 </ul>

@@ -24,14 +24,15 @@ from django.contrib.contenttypes import generic
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from managers import VoteManager
+
 
 class User(AbstractUser):
     karma = models.IntegerField(default=0)
-    thumbs_up = models.IntegerField(default=0)
-    thumbs_down = models.IntegerField(default=0)
-    thumbs_ratio = models.IntegerField(default=0)
+    likes = models.IntegerField(default=0)
+    dislikes = models.IntegerField(default=0)
     location = models.CharField(max_length=150, null=True, blank=True)
-    
+
     subscribe_newsletter = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -39,16 +40,16 @@ class User(AbstractUser):
     def change_karma(self, action_id, **kwargs):
         try:
             action = KarmaAction.objects.get(identifier=action_id)
-            
+
             content_type = kwargs.pop('content_type', None)
             object_id = kwargs.pop('object_id', None)
-            
+
             if content_type is None and object_id is None:
                 obj = kwargs.pop('obj', None)
 
                 content_type = ContentType.objects.get_for_model(obj)
                 object_id = obj.pk
-                
+
             karma = KarmaChange.objects.filter(user=self,
                                                content_type=content_type,
                                                object_id=object_id)
@@ -95,3 +96,16 @@ class KarmaChange(models.Model):
     content_type = models.ForeignKey(ContentType, null=True, blank=True)
     object_id = models.PositiveIntegerField(null=True, blank=True)
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+
+class Vote(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.SmallIntegerField()
+    status = models.PositiveSmallIntegerField(default=0, null=True, blank=True)
+    ip = models.IPAddressField(_('IP adress'))
+
+    objects = VoteManager()

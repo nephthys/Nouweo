@@ -31,7 +31,7 @@ from models import KarmaAction, KarmaChange
 
 @receiver(post_save, sender=Rating)
 def new_rating(sender, instance, signal, created, **kwargs):
-    if isinstance(instance.content_object, ThreadedComment) \
+    if isinstance(instance.content_object, ThreadedComment)
     and isinstance(instance.content_object.content_object, PostType):
 
         from community.karma import karma_rating_comment_published
@@ -41,4 +41,3 @@ def new_rating(sender, instance, signal, created, **kwargs):
 
         from community.karma import karma_rating_post
         karma_rating_post(instance)
-

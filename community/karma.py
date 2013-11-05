@@ -21,17 +21,18 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from posts.models import PostType, News, Picture, Version
 
+
 def karma_rating_post(instance):
     """
     Performs different actions following a vote on a post.
-    
-    Pending posts (post.status = 2) : A number of positive votes are required 
+
+    Pending posts (post.status = 2) : A number of positive votes are required
     to publish a post. Otherwise, it is rejected after several negative votes.
     """
     pos_votes_to_publish = getattr(settings,
                                    'NOUWEO_POS_VOTES_TO_PUBLISH_POST', 30)
     neg_votes_to_publish = getattr(settings,
-                                   'NOUWEO_NEG_VOTES_TO_PUBLISH_POST', -30)                              
+                                   'NOUWEO_NEG_VOTES_TO_PUBLISH_POST', -30)
     post = instance.content_object
 
     if post.status == 2:
@@ -42,7 +43,7 @@ def karma_rating_post(instance):
 
 def karma_rating_comment_published(instance):
     """
-    Reward / punish a constructive / useless published comment due to 
+    Reward / punish a constructive / useless published comment due to
     a positive / negative vote of a user.
     """
     user = get_user_model().objects.get(pk=instance.user.id)
@@ -67,8 +68,8 @@ def karma_post_published(post_id):
     """
     try:
         post = PostType.objects.filter(id=post_id).select_subclasses()[0]
-        
-        if isinstance(post, News)
+
+        if isinstance(post, News):
             query_set = Version.objects.filter(news=post, is_minor=False)
             query_set.query.group_by = ['author_id']
 
