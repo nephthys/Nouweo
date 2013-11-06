@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import IntegerField, FloatField
 
-from models import Vote
-
 
 class RatingManager(object):
     def __init__(self, instance, field):
@@ -47,7 +45,8 @@ class RatingManager(object):
 
         if status is not None:
             kwargs['status'] = int(status)
-
+        
+        from models import Vote
         return Vote.objects.filter(**kwargs)
 
     def add(self, user, value, ip, status=None, commit=True):
@@ -64,7 +63,8 @@ class RatingManager(object):
 
         if status is not None:
             kwargs['status'] = int(status)
-
+        
+        from models import Vote
         try:
             vote, added = Vote.objects.get(**kwargs), False
         except Vote.DoesNotExist:
@@ -127,6 +127,7 @@ class RatingManager(object):
         if status is not None:
             kwargs['status'] = int(status)
 
+        from models import Vote
         count = Vote.objects.filter(**kwargs).count()
 
         return (count > 0)

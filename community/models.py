@@ -37,6 +37,15 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def has_privilege(self, privilege_id, **kwargs):
+        try:
+            privilege = KarmaPrivilege.objects.get(identifier=privilege_id)
+            if self.karma >= privilege.minimum_points:
+                return True
+        except KarmaPrivilege.DoesNotExist:
+            pass
+        return False
+
     def change_karma(self, action_id, **kwargs):
         try:
             action = KarmaAction.objects.get(identifier=action_id)
@@ -98,6 +107,12 @@ class KarmaChange(models.Model):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
 
+class KarmaPrivilege(models.Model):
+    name = models.CharField(max_length=150)
+    identifier = models.CharField(unique=True, max_length=150)
+    minimum_points = models.IntegerField()
+
+
 class Vote(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -109,3 +124,6 @@ class Vote(models.Model):
     ip = models.IPAddressField(_('IP adress'))
 
     objects = VoteManager()
+
+
+import signals

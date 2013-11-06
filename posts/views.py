@@ -30,7 +30,8 @@ from django.http import Http404, HttpResponse, HttpResponseNotFound, \
 from models import PostType, News, Picture, Category, Version, Idea, \
     IdeaForm, NewsForm
 from mezzanine.generic.models import ThreadedComment, Rating
-
+from community.models import KarmaPrivilege
+from community.decorators import permissions_required
 
 def homepage(request, page=0):
     status_allowed = [3]
@@ -163,7 +164,7 @@ def select_revision(request, cat, slug, revision):
                                 kwargs={'cat': cat, 'slug': slug}))
 
 
-@login_required
+@permissions_required(privilege='delete_revision')
 def delete_revision(request, cat, slug, revision):
     news = get_object_or_404(News, slug=slug)
     rev = get_object_or_404(Version, pk=revision)

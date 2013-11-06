@@ -23,3 +23,4 @@ from models import *
 admin.site.register(User)
 admin.site.register(KarmaAction)
 admin.site.register(KarmaChange)
+admin.site.register(KarmaPrivilege)

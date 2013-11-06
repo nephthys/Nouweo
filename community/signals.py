@@ -20,18 +20,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.contrib.auth import get_user_model
 from django.contrib.comments.models import Comment
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_save
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from mezzanine.generic.models import Rating, ThreadedComment
-
+from mezzanine.generic.models import ThreadedComment
 from posts.models import PostType, News, Picture
-from models import KarmaAction, KarmaChange
+from models import Vote
 
-
+'''
 @receiver(post_save, sender=Rating)
 def new_rating(sender, instance, signal, created, **kwargs):
-    if isinstance(instance.content_object, ThreadedComment)
+    if isinstance(instance.content_object, ThreadedComment) \
     and isinstance(instance.content_object.content_object, PostType):
 
         from community.karma import karma_rating_comment_published
@@ -41,3 +41,15 @@ def new_rating(sender, instance, signal, created, **kwargs):
 
         from community.karma import karma_rating_post
         karma_rating_post(instance)
+'''
+
+@receiver(post_save, sender=Vote)
+@receiver(post_delete, sender=Vote)
+def count_user_votes(sender, instance, signal, created, **kwargs):
+    try:
+        user = get_user_model().objects.get(pk=instance.user.id)
+        user.likes = Vote.objects.filter(user=user, value__gt=0).count()
+        user.dislikes = Vote.objects.filter(user=user, value__lt=0).count()
+        user.save()
+    except ObjectDoesNotExist:
+        pass

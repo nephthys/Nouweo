@@ -26,7 +26,6 @@ from django.core.urlresolvers import reverse
 from django.forms import ModelForm
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
-from django.dispatch import Signal
 
 from model_utils.managers import InheritanceManager
 
