@@ -17,20 +17,28 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from django import forms
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.comments.forms import CommentSecurityForm
+from django.contrib.comments.models import BaseCommentAbstractModel
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
+from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
+from fields import RatingField
 from managers import VoteManager
+
+import datetime
 
 
 class User(AbstractUser):
     karma = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
     dislikes = models.IntegerField(default=0)
+    comments = models.IntegerField(default=0)
     location = models.CharField(max_length=150, null=True, blank=True)
 
     subscribe_newsletter = models.BooleanField(default=False)
@@ -124,6 +132,56 @@ class Vote(models.Model):
     ip = models.IPAddressField(_('IP adress'))
 
     objects = VoteManager()
+
+
+class ThreadedComment(BaseCommentAbstractModel):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    comment = models.TextField()
+    comment_html = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now=True)
+    replied_to = models.ForeignKey('self', null=True, editable=False,
+                                   related_name='comments')
+    ip_address = models.IPAddressField(_('IP adress'))
+    rating = RatingField()
+
+    def get_absolute_url(self):
+        url = self.content_object.get_absolute_url()
+        return '%s#comment-%s' % (url, self.id)
+
+
+class ThreadedCommentForm(CommentSecurityForm):
+    comment = forms.CharField(label=_('Comment'), widget=forms.Textarea)
+    replied_to = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def get_comment_object(self):
+        if not self.is_valid():
+            raise ValueError('get_comment_object may only be called on valid forms')
+
+        CommentModel = self.get_comment_model()
+        new = CommentModel(**self.get_comment_create_data())
+        return new
+
+    def get_comment_model(self):
+        return ThreadedComment
+
+    def get_comment_create_data(self):
+        import markdown
+
+        data = dict(
+            content_type = ContentType.objects.get_for_model(self.target_object),
+            object_pk    = force_text(self.target_object._get_pk_val()),
+            comment      = self.cleaned_data['comment'],
+            comment_html = markdown.markdown(self.cleaned_data['comment']),
+            created_at   = datetime.datetime.now(),
+            site_id      = settings.SITE_ID,
+            # is_public    = True,
+            # is_removed   = False,
+        )
+
+        if self.cleaned_data.get('replied_to'):
+            data['replied_to_id'] = self.cleaned_data.get('replied_to')
+
+        return data
 
 
 import signals

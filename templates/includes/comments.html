@@ -1,0 +1,9 @@
+{% load i18n comments posts_tags %}
+<div id="comments">
+<h3>{% trans "Comments" %}</h3>
+
+{% comment_thread object_for_comments %}
+
+{% render_comment_form for object_for_comments %}
+
+</div>

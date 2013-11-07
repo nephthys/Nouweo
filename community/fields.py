@@ -17,8 +17,10 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+from django.contrib.contenttypes.generic import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import IntegerField, FloatField
+from django.db.models.signals import post_save, post_delete
 
 
 class RatingManager(object):
@@ -90,17 +92,12 @@ class RatingManager(object):
         likes = [r.value for r in all_votes if r.value > 0]
         dislikes = [r.value for r in all_votes if r.value < 0]
         votes = likes + dislikes
-        print votes
 
         count_val = len(votes)
         likes_val = len(likes)
         dislikes_val = len(dislikes)
         sum_val = sum(votes)
         ratio_val = 0 if count_val == 0 else likes_val * 100 / count_val
-
-        print 'likes_val = %s' % likes_val
-        print 'dislikes_val = %s' % dislikes_val
-        print 'ratio_val = %s' % ratio_val
 
         setattr(self.instance, self.likes_field_name, likes_val)
         setattr(self.instance, self.dislikes_field_name, dislikes_val)
@@ -178,3 +175,53 @@ class RatingField(IntegerField):
 
         field = RatingCreator(self)
         setattr(cls, name, field)
+
+
+class CommentsField(GenericRelation):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('object_id_field', 'object_pk')
+        kwargs.setdefault('to', 'community.ThreadedComment')
+
+        super(CommentsField, self).__init__(*args, **kwargs)
+
+    def contribute_to_class(self, cls, name):
+        self.name = name
+
+        super(CommentsField, self).contribute_to_class(cls, name)
+
+        self.count_field = IntegerField(editable=False, default=0)
+        cls.add_to_class('%s_count' % (self.name,), self.count_field)
+
+        getter_name = "get_%s_name" % self.__class__.__name__.lower()
+        cls.add_to_class(getter_name, lambda self: name)
+
+        post_save.connect(self.related_items_changed)
+        post_delete.connect(self.related_items_changed)
+
+    def related_items_changed(self, **kwargs):
+        try:
+            to = self.rel.to
+            if isinstance(to, basestring):
+                to = get_model(*to.split('.', 1))
+            if not isinstance(kwargs['instance'], to):
+                raise TypeError
+        except (TypeError, ValueError):
+            return
+        for_model = kwargs['instance'].content_type.model_class()
+        if issubclass(for_model, self.model):
+            instance_id = kwargs['instance'].object_pk
+            try:
+                instance = for_model.objects.get(id=instance_id)
+            except self.model.DoesNotExist:
+                return
+            if hasattr(instance, 'get_content_model'):
+                instance = instance.get_content_model()
+            related_manager = getattr(instance, self.name)
+            try:
+                count = related_manager.count_queryset()
+            except AttributeError:
+                count = related_manager.count()
+
+            count_field_name = '%s_count' % self.name
+            setattr(instance, count_field_name, count)
+            instance.save()

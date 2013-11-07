@@ -10,6 +10,9 @@ urlpatterns = patterns('',
     url(r'^$', homepage, name='home'),
 
     url(r'^admin/', include(admin.site.urls)),
+
+    url(r'^comments/posted/$', comment_posted),
+    url(r'^comments/', include('django.contrib.comments.urls')),
     ('^', include('mezzanine.urls')),
 
     url(r'^add/news/$', add_news, name='add_news'),

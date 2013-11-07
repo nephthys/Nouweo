@@ -23,9 +23,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render, get_object_or_404
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, HttpResponseNotFound, \
-    HttpResponseRedirect
+    HttpResponseRedirect, Http404
 from posts.models import PostType, Idea
-
+from models import ThreadedComment
 
 @login_required
 def add_vote(request, model, id, direction):
@@ -52,3 +52,13 @@ def add_vote(request, model, id, direction):
     else:
         referer = request.META.get('HTTP_REFERER', None)
         return HttpResponseRedirect(referer if referer else permalink)
+
+
+def comment_posted(request):
+    comment_id = request.GET.get('c', None)
+    if comment_id:
+        comment = get_object_or_404(ThreadedComment, pk=comment_id)
+        permalink_obj = comment.content_object.get_absolute_url()
+        return HttpResponseRedirect('%s#c%d' % (permalink_obj, int(comment_id)))
+    else:
+        raise Http404

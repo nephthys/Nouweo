@@ -17,10 +17,18 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from django.contrib.auth import get_user_model
 from django.contrib import admin
 from models import *
+
+
+class KarmaPrivilegeAdmin(admin.ModelAdmin):
+	list_display = ('name', 'identifier', 'minimum_points', 'users_concerned')
+
+	def users_concerned(self, obj):
+		return get_user_model().objects.filter(karma__gt=obj.minimum_points).count()
 
 admin.site.register(User)
 admin.site.register(KarmaAction)
 admin.site.register(KarmaChange)
-admin.site.register(KarmaPrivilege)
+admin.site.register(KarmaPrivilege, KarmaPrivilegeAdmin)

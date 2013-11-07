@@ -128,7 +128,7 @@ INSTALLED_APPS = (
     'community',
 )
 
-COMMENTS_APP = 'mezzanine.generic'
+COMMENTS_APP = 'community'
 AUTH_USER_MODEL = 'community.User'
 
 RATINGS_RANGE = (-1, 1)

@@ -29,8 +29,8 @@ from django.utils.translation import ugettext as _
 
 from model_utils.managers import InheritanceManager
 
-from mezzanine.generic.fields import CommentsField, KeywordsField
-from community.fields import RatingField
+from mezzanine.generic.fields import KeywordsField
+from community.fields import RatingField, CommentsField
 
 import datetime
 

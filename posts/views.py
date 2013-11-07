@@ -29,8 +29,7 @@ from django.http import Http404, HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect
 from models import PostType, News, Picture, Category, Version, Idea, \
     IdeaForm, NewsForm
-from mezzanine.generic.models import ThreadedComment, Rating
-from community.models import KarmaPrivilege
+from community.models import ThreadedComment
 from community.decorators import permissions_required
 
 def homepage(request, page=0):
@@ -71,7 +70,7 @@ def view_posts_draft(request):
         form = IdeaForm(instance=idea)
 
     ideas_list = Idea.objects.select_related().filter(status=1) \
-        .order_by('-rating_average')
+        .order_by('-rating_ratio')
 
     news_list = News.objects.filter(status=1) \
                     .order_by('-updated_at') \
@@ -79,12 +78,11 @@ def view_posts_draft(request):
                                     'last_version__author') \
                     .prefetch_related('versions', 'versions__author')
 
-    for news in news_list:
-        for rev in news.versions.all():
-            print rev.id
-
     last_revisions = Version.objects.select_related().filter(news__status=1) \
         .order_by('-created_at')[:10]
+
+    last_comments = ThreadedComment.objects.filter(object_pk__in=news_list) \
+        .select_related().order_by('-created_at')[:10]
 
     return render(request, 'posts/posts_draft.html', {
         'ideas_list': ideas_list, 'news_list': news_list,
@@ -106,7 +104,7 @@ def view_posts_pending(request):
         .annotate(num_votes=Count('user')).order_by('-num_votes')[:10]
 
     last_comments = ThreadedComment.objects.filter(content_type=post_ctype) \
-        .select_related().order_by('-submit_date')[:10]
+        .select_related().order_by('-created_at')[:10]
 
     return render(request, 'posts/posts_pending.html', {
         'posts_list': posts_list, 'best_voters': best_voters,

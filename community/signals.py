@@ -26,7 +26,7 @@ from django.dispatch import receiver
 
 from mezzanine.generic.models import ThreadedComment
 from posts.models import PostType, News, Picture
-from models import Vote
+from models import Vote, ThreadedComment
 
 '''
 @receiver(post_save, sender=Rating)
@@ -50,6 +50,17 @@ def count_user_votes(sender, instance, signal, created, **kwargs):
         user = get_user_model().objects.get(pk=instance.user.id)
         user.likes = Vote.objects.filter(user=user, value__gt=0).count()
         user.dislikes = Vote.objects.filter(user=user, value__lt=0).count()
+        user.save()
+    except ObjectDoesNotExist:
+        pass
+
+
+@receiver(post_save, sender=ThreadedComment)
+@receiver(post_delete, sender=ThreadedComment)
+def count_user_comments(sender, instance, signal, created, **kwargs):
+    try:
+        user = get_user_model().objects.get(pk=instance.user.id)
+        user.comments = ThreadedComment.objects.filter(user=user).count()
         user.save()
     except ObjectDoesNotExist:
         pass
