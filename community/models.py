@@ -129,7 +129,7 @@ class Vote(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     value = models.SmallIntegerField()
     status = models.PositiveSmallIntegerField(default=0, null=True, blank=True)
-    ip = models.IPAddressField(_('IP adress'))
+    ip = models.IPAddressField(_('IP address'))
 
     objects = VoteManager()
 
@@ -141,7 +141,7 @@ class ThreadedComment(BaseCommentAbstractModel):
     created_at = models.DateTimeField(auto_now=True)
     replied_to = models.ForeignKey('self', null=True, editable=False,
                                    related_name='comments')
-    ip_address = models.IPAddressField(_('IP adress'))
+    ip_address = models.IPAddressField(_('IP address'))
     rating = RatingField()
 
     def get_absolute_url(self):

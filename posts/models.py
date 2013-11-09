@@ -63,7 +63,7 @@ class PostType(models.Model):
     views_count = models.IntegerField(_('number views'), default=0)
     last_content = models.TextField(editable=False, null=True, blank=True)
     last_content_html = models.TextField(editable=False, null=True, blank=True)
-    ip = models.IPAddressField(_('IP adress'))
+    ip = models.IPAddressField(_('IP address'))
 
     rating = RatingField(count_status='status')
     comments = CommentsField()
@@ -171,7 +171,7 @@ class Version(models.Model):
     content_html = models.TextField(blank=True)
     reason = models.CharField(max_length=100, blank=True)
     is_minor = models.BooleanField(_('small contribution'), default=False)
-    ip = models.IPAddressField(_('IP adress'))
+    ip = models.IPAddressField(_('IP address'))
     chars_count = models.PositiveSmallIntegerField(default=0)
     chars_diff = models.SmallIntegerField(default=0)
 
@@ -223,7 +223,7 @@ class Idea(models.Model):
                                      null=True, blank=True)
     completed_post = models.ForeignKey(PostType, null=True, blank=True)
     status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
-    ip = models.IPAddressField(_('IP adress'))
+    ip = models.IPAddressField(_('IP address'))
     rating = RatingField(count_status='status')
 
     def get_absolute_url(self):
