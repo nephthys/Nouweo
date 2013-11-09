@@ -33,7 +33,7 @@ from models import ThreadedComment
 def view_user_profile(request, id):
     try:
         user = get_user_model().objects.get(pk=id, is_active=True)
-        return render(request, 'community/user_profile.html', {'user': user})
+        return render(request, 'user_profile.html', {'user': user})
     except ObjectDoesNotExist:
         pass
 

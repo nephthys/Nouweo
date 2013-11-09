@@ -47,7 +47,7 @@ def homepage(request, page=0):
         print post.parent
         # print post.__dict__
 
-    return render(request, 'posts/homepage.html', {'posts_list': posts_list})
+    return render(request, 'homepage.html', {'posts_list': posts_list})
 
 
 @login_required
@@ -84,7 +84,7 @@ def view_posts_draft(request):
     last_comments = ThreadedComment.objects.filter(object_pk__in=news_list) \
         .select_related().order_by('-created_at')[:10]
 
-    return render(request, 'posts/posts_draft.html', {
+    return render(request, 'posts_draft.html', {
         'ideas_list': ideas_list, 'news_list': news_list,
         'last_revisions': last_revisions, 'form': form, 'idea_id': idea_id
     })
@@ -106,7 +106,7 @@ def view_posts_pending(request):
     last_comments = ThreadedComment.objects.filter(content_type=post_ctype) \
         .select_related().order_by('-created_at')[:10]
 
-    return render(request, 'posts/posts_pending.html', {
+    return render(request, 'posts_pending.html', {
         'posts_list': posts_list, 'best_voters': best_voters,
         'last_comments': last_comments
     })
@@ -120,7 +120,7 @@ def view_post(request, cat, slug, revision=0):
     except IndexError, PostType.DoesNotExist:
         raise Http404
 
-    return render(request, 'posts/view_post.html', {'post': post})
+    return render(request, 'view_post.html', {'post': post})
 
 
 def view_revisions(request, cat, slug):
@@ -142,7 +142,7 @@ def view_revisions(request, cat, slug):
 
         diff = render_html_diff(old_rev, new_rev)
 
-    return render(request, 'posts/view_post_revisions.html', {
+    return render(request, 'view_post_revisions.html', {
         'post': news, 'post_revisions': revisions,
         'nb_revisions': nb_revisions, 'diff': diff
     })
@@ -204,7 +204,7 @@ def add_news(request):
         # form = modelform_factory(News, form=NewsForm, exclude=('status'))
         form = NewsForm(initial=initial)
 
-    return render(request, 'posts/add_news.html', {'form': form})
+    return render(request, 'add_news.html', {'form': form})
 
 
 @login_required
@@ -225,4 +225,4 @@ def edit_news(request, id):
 
         form = NewsForm(instance=news, initial=initial)
 
-    return render(request, 'posts/add_news.html', {'id': id, 'form': form})
+    return render(request, 'add_news.html', {'id': id, 'form': form})
