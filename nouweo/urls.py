@@ -21,7 +21,9 @@ urlpatterns = patterns('',
     url(r'^posts/pending/$', view_posts_pending, name='posts_pending'),
     url(r'^posts/propose/(?P<post_id>\d+)/$', post_propose,
         name='post_propose'),
-        
+
+    url(r'^users/(?P<id>\d+)/$', view_user_profile, name='user_profile'),
+
     url(r'^rating/(?P<model>post|idea|comment)/(?P<id>\d+)/(?P<direction>up|down)/$', add_vote,
         name='add_vote'),
 

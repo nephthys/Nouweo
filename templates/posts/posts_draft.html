@@ -1,60 +1,88 @@
 {% extends "base.html" %}
 
-{% load i18n %}
-{% load mezzanine_tags rating_tags %}
+{% load i18n humanize %}
+{% load community_tags mezzanine_tags %}
+
+{% block breadcrumbs %}
+<li class="current"><a href="{{ request.path }}">{% trans "Draft" %}</a></li>
+{% endblock %}
 
 {% block content %}
 
-<h3>{% trans "suggestion box" %}</h3>
+<div class="row full-width" id="container">
+    <div class="large-9 columns" id="content">
+        <h3>{% trans "Writing in progress" %}</h3>
 
-{% if ideas_list %}
-<ul class="ideas_list">
-    {% for idea in ideas_list %}
-    <li>
-        <strong>{{ idea.title }}</strong> {{ idea.content|linebreaksbr }}
-        <a href="{% url "posts_draft" %}?idea_id={{ idea.id }}">{% trans "edit" %}</a>
-    </li>
-    {% endfor %}
-</ul>
-{% endif %}
+        {% for post in news_list %}
 
-<form action="{% url "posts_draft" %}{% if idea_id %}?idea_id={{ idea_id }}{% endif %}" method="post">
-    {{ form.as_p }}
-    {% csrf_token %}
-    <p><input type="submit" name="submit" value="{% if idea_id %}{% trans "update" %}{% else %}{% trans "add" %}{% endif %}" /></p>
-</form>
+        <div class="row full-width">
+            <div class="small-8 large-9 columns">
+                <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+                <ul class="post_details inline-list">
+                    <li><a href="{{ post.category.get_absolute_url }}">{{ post.category.name }}</a></li>
+                    <li>{% blocktrans with time=post.created_at|naturaltime user=post.created_by.username %}Created {{ time }} by {{ user }}{% endblocktrans %}</li>
+                    {% if post.updated_at %}<li>{% blocktrans with time=post.updated_at|naturaltime %}Last updated {{ time }}{% endblocktrans %}</li>{% endif %}
+                    {% if post.type == 'news' %}<li><a href="{% url "post_revisions" cat=post.category.slug slug=post.slug %}">{% blocktrans with count=post.versions_count %}{{ count }} revision{{ count|pluralize }}{% endblocktrans %}</a></li>{% endif %}
+                    <li><a href="{{ post.get_absolute_url }}#comments">{% blocktrans with count=post.comments_count %}{{ count }} comment{{ count|pluralize }}{% endblocktrans %}</a></li>
+                </ul>
+                <p class="post_content">{{ post.last_content_html|striptags|truncatewords:100 }}</p>
+            </div>
 
-<h3>{% trans "last revisions" %}</h3>
+            <div class="small-4 large-3 columns">
+            {% if post.type == 'news' %}
+                {% for rev in post.versions.all|dictsortreversed:"id" %}
+                <ul class="last_revisions">
+                    <li>
+                        <a class="rev_id" href="{% url "post_revision" cat=post.category.slug slug=post.slug revision=rev.id %}">#</a>
+                        <span class="right rev_date">{{ rev.created_at|naturaltime }}</span>
+                        <span class="rev_author">{{ rev.author.username }}</span>
+                    </li>
+                </ul>
+                {% endfor %}
+                <a href="{{ post.get_absolute_url_edit }}" class="small button expand" style="margin-bottom: .5em;">{% trans "Contribute" %}</a>
+                <a href="{% url "post_propose" post.id %}" class="small button expand" style="margin-bottom: 0;">{% trans "Propose" %}</a>
+            {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
-{% if last_revisions %}
-<ul>
-    {% for rev in last_revisions %}
-    <li>
-        {{ rev.author.username }} -- {{ rev.created_at }}<br />
-        {% if rev.reason %}{{ rev.reason }}{% else %}{% trans "unspecified" %}{% endif %}
-    </li>
-    {% endfor %}
-</ul>
-{% endif %}
+    <div class="large-3 columns" id="right_sidebar">
+        <h3>{% trans "Suggestion box" %}</h3>
 
-<h3>{% trans "writing in progress" %}</h3>
+        {% if ideas_list %}
+        <ul class="ideas_list">
+            {% for idea in ideas_list %}
+            <li>
+                <strong>{{ idea.title }}</strong> {{ idea.content|linebreaksbr }}
+                <a href="{% url "posts_draft" %}?idea_id={{ idea.id }}">{% trans "edit" %}</a><br /><br />
 
-{% for post in news_list %}
-<div>
-    <h2>{{ post.type }} - <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-    {{ post.get_last_author|safe }} |
-    {{ post.category.name }}<br /><br />
-	
-	{% if post.type == 'news' %}
-		{% for rev in post.versions.all|dictsortreversed:"id" %}
-			<a href="{% url "post_revision" cat=post.category.slug slug=post.slug revision=rev.id %}">#</a>
-			{{ rev.author.username }} -- {{ rev.created_at }}<br />
-		{% endfor %}
-	{% endif %}
-    
-    -- <a href="{% url "post_propose" post.id %}">{% trans "propose" %}</a>
-    -- <a href="{{ post.get_absolute_url_edit }}">{% trans "contribute" %}</a>
+                {% rating_for idea model="idea" %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <form action="{% url "posts_draft" %}{% if idea_id %}?idea_id={{ idea_id }}{% endif %}" method="post" style="display: none;">
+            {{ form.as_p }}
+            {% csrf_token %}
+            <p><input type="submit" name="submit" value="{% if idea_id %}{% trans "update" %}{% else %}{% trans "add" %}{% endif %}" /></p>
+        </form>
+
+        <h3>{% trans "Last revisions" %}</h3>
+
+        {% if last_revisions %}
+        <ul>
+            {% for rev in last_revisions %}
+            <li>
+                {{ rev.author.username }} -- {{ rev.created_at }}<br />
+                {% if rev.reason %}{{ rev.reason }}{% else %}{% trans "unspecified" %}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
 </div>
-{% endfor %}
 
 {% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% load i18n humanize %}
+
+{% block breadcrumbs %}
+<li><a href="#">{% trans "Users" %}</a></li>
+<li class="current"><a href="{{ request.path }}">{{ user.username }}</a></li>
+{% endblock %}
+
+{% block content %}
+<section class="row full-width" id="header_profile">
+	<div class="large-3 columns">
+	</div>
+	<div class="large-9 columns">
+		<h2>{{ user.username }}</h2>
+	</div>
+</section>
+{% endblock %}

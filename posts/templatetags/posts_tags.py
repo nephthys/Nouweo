@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-*- encoding: utf-8 -*-
-'''
+"""
 Copyright (c) 2013 Camille 'nephthys' Bouiller <camille@nouweo.com>
 
 Nouweo is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 from collections import defaultdict
 from django import template
@@ -26,11 +26,6 @@ from ..utils import order_by_score
 register = template.Library()
 
 
-@register.simple_tag(takes_context=True)
-def widget_poll(context, poll_id):
-    return 'hello poll %s' % poll_id
-
-
 @register.inclusion_tag('includes/comments.html', takes_context=True)
 def comments_for(context, obj):
     context['object_for_comments'] = obj
@@ -39,12 +34,12 @@ def comments_for(context, obj):
 
 @register.simple_tag(takes_context=True)
 def order_comments_by_score_for(context, obj):
-    '''
+    """
     Preloads threaded comments in the same way Mezzanine initially does,
     but here we order them by score.
 
     Source : https://github.com/stephenmcd/drum/blob/master/main/templatetags/drum_tags.py
-    '''
+    """
     comments = defaultdict(list)
     # qs = obj.comments.visible().select_related('user')
     qs = obj.comments.select_related('user')
@@ -56,14 +51,14 @@ def order_comments_by_score_for(context, obj):
 
 @register.inclusion_tag('includes/comment.html', takes_context=True)
 def comment_thread(context, parent):
-    '''
+    """
     Return a list of child comments for the given parent, storing all
     comments in a dict in the context when first called, using parents
     as keys for retrieval on subsequent recursive calls from the
     comments template.
 
     Source : https://github.com/stephenmcd/mezzanine/blob/master/mezzanine/generic/templatetags/comment_tags.py
-    '''
+    """
     if 'all_comments' not in context:
         comments = defaultdict(list)
         if 'request' in context and context['request'].user.is_staff:

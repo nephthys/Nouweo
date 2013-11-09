@@ -3,18 +3,30 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <title>Nouweo</title>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-        <script src="{% static "js/common.js" %}"></script>
+        <link rel="stylesheet" href="{% static "css/normalize.css" %}" />
+        <link rel="stylesheet" href="{% static "css/foundation.min.css" %}" />
+        <link rel="stylesheet" href="{% static "css/nw.base.css" %}" />
     </head>
     <body>
     
-	<ul id="navigation">
-		<li><a href="{% url "home" %}">{% trans "home" %}</a></li>
-		<li><a href="{% url "posts_draft" %}">{% trans "draft" %}</a></li>
-		<li><a href="{% url "posts_pending" %}">{% trans "pending" %}</a></li>
-	</ul>
-	
+    <ul id="navigation" class="button-group radius">
+        <li><a href="{% url "posts_draft" %}" class="small button">{% trans "Draft" %}</a></li>
+        <li><a href="{% url "posts_pending" %}" class="small button">{% trans "Pending" %}</a></li>
+    </ul>
+
+    <ul class="breadcrumbs">
+        <li><a href="{% url "home" %}">{% trans "Home" %}</a></li>
+        {% block breadcrumbs %}{% endblock %}
+    </ul>
+
     {% block content %}{% endblock %}
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="{% static "js/common.js" %}"></script>
+    <script src="{% static "js/foundation.min.js" %}"></script>
+    <script>
+        $(document).foundation();
+    </script>
     
     </body>
 </html>

@@ -17,7 +17,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render, get_object_or_404
@@ -26,6 +28,15 @@ from django.http import HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect, Http404
 from posts.models import PostType, Idea
 from models import ThreadedComment
+
+
+def view_user_profile(request, id):
+    try:
+        user = get_user_model().objects.get(pk=id, is_active=True)
+        return render(request, 'community/user_profile.html', {'user': user})
+    except ObjectDoesNotExist:
+        pass
+
 
 @login_required
 def add_vote(request, model, id, direction):
@@ -36,20 +47,19 @@ def add_vote(request, model, id, direction):
     permalink = None
 
     if model == 'post':
-        post = get_object_or_404(PostType, pk=id)
-        permalink = post.get_absolute_url()
-        if post.status in [1, 3]:
-            vote = post.rating.add(user, value, ip, post.status)
+        obj = get_object_or_404(PostType, pk=id)
+        if obj.status in [2, 3]:
+            vote = obj.rating.add(user, value, ip, obj.status)
     elif model == 'idea':
-        idea = get_object_or_404(Idea, pk=id)
-        permalink = idea.get_absolute_url()
-        if idea.status == 1:
-            vote = idea.rating.add(user, value, ip, idea.status)
+        obj = get_object_or_404(Idea, pk=id)
+        if obj.status == 1:
+            vote = obj.rating.add(user, value, ip, obj.status)
 
     if request.is_ajax():
         import json
         return HttpResponse(json.dumps(vote), mimetype='application/json')
     else:
+        permalink = obj.get_absolute_url()
         referer = request.META.get('HTTP_REFERER', None)
         return HttpResponseRedirect(referer if referer else permalink)
 

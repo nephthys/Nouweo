@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.auth.models import AbstractUser, UserManager, Permission
 from django.contrib.comments.forms import CommentSecurityForm
 from django.contrib.comments.models import BaseCommentAbstractModel
 from django.contrib.contenttypes.models import ContentType
@@ -47,7 +47,8 @@ class User(AbstractUser):
 
     def has_privilege(self, privilege_id, **kwargs):
         try:
-            privilege = KarmaPrivilege.objects.get(identifier=privilege_id)
+            privilege = KarmaPrivilege.objects.get(permission__codename=
+                                                   privilege_id)
             if self.karma >= privilege.minimum_points:
                 return True
         except KarmaPrivilege.DoesNotExist:
@@ -111,20 +112,19 @@ class KarmaChange(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     points = models.SmallIntegerField()
     content_type = models.ForeignKey(ContentType, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    object_pk = models.PositiveIntegerField(null=True, blank=True)
+    content_object = generic.GenericForeignKey('content_type', 'object_pk')
 
 
 class KarmaPrivilege(models.Model):
-    name = models.CharField(max_length=150)
-    identifier = models.CharField(unique=True, max_length=150)
+    permission = models.ForeignKey(Permission)
     minimum_points = models.IntegerField()
 
 
 class Vote(models.Model):
     content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    object_pk = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_pk')
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     date = models.DateTimeField(auto_now_add=True)
     value = models.SmallIntegerField()

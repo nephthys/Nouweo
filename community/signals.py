@@ -45,7 +45,7 @@ def new_rating(sender, instance, signal, created, **kwargs):
 
 @receiver(post_save, sender=Vote)
 @receiver(post_delete, sender=Vote)
-def count_user_votes(sender, instance, signal, created, **kwargs):
+def count_user_votes(sender, instance, signal, **kwargs):
     try:
         user = get_user_model().objects.get(pk=instance.user.id)
         user.likes = Vote.objects.filter(user=user, value__gt=0).count()
@@ -57,7 +57,7 @@ def count_user_votes(sender, instance, signal, created, **kwargs):
 
 @receiver(post_save, sender=ThreadedComment)
 @receiver(post_delete, sender=ThreadedComment)
-def count_user_comments(sender, instance, signal, created, **kwargs):
+def count_user_comments(sender, instance, signal, **kwargs):
     try:
         user = get_user_model().objects.get(pk=instance.user.id)
         user.comments = ThreadedComment.objects.filter(user=user).count()

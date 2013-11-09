@@ -1,37 +1,57 @@
 {% extends "base.html" %}
 
-{% load i18n %}
-{% load mezzanine_tags rating_tags %}
+{% load i18n humanize %}
+{% load community_tags %}
 
 {% block content %}
 
-<h3>{% trans "almost published" %}</h3>
-<!-- #TODO -->
+<div class="row full-width" id="container">
+    <div class="large-9 columns" id="content">
+    	{% voted_for_objects posts_list %}
+		{% for post in posts_list %}
+		<h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+        <div class="row full-width">
+            <div class="small-10 columns">
+                <ul class="post_details inline-list">
+                    <li><a href="{{ post.category.get_absolute_url }}">{{ post.category.name }}</a></li>
+                    <li>{% blocktrans with time=post.created_at|naturaltime user=post.created_by.username %}Created {{ time }} by {{ user }}{% endblocktrans %}</li>
+                    {% if post.updated_at %}<li>{% blocktrans with time=post.updated_at|naturaltime %}Last updated {{ time }}{% endblocktrans %}</li>{% endif %}
+                    {% if post.type == 'news' %}<li><a href="{% url "post_revisions" cat=post.category.slug slug=post.slug %}">{% blocktrans with count=post.versions_count %}{{ count }} revision{{ count|pluralize }}{% endblocktrans %}</a></li>{% endif %}
+                    <li><a href="{{ post.get_absolute_url }}#comments">{% blocktrans with count=post.comments_count %}{{ count }} comment{{ count|pluralize }}{% endblocktrans %}</a></li>
+                </ul>
+                <p class="post_content">{{ post.last_content_html|striptags|truncatewords:100 }}</p>
+            </div>
 
-<h3>{% trans "last comments" %}</h3>
-{% if last_comments %}
-<ul>
-	{% for comment in last_comments %}
-		<li>{{ comment.user_name }} -- {{ comment.comment }}</li>
-	{% endfor %}
-</ul>
-{% endif %}
+            <div class="small-2 columns">
+				{% rating_for post model="post" %}
+            </div>
+        </div>
+		{% endfor %}
+    </div>
 
-<h3>{% trans "most active users" %}</h3>
+    <div class="large-3 columns" id="right_sidebar">
+		<h3>{% trans "Almost published" %}</h3>
+		<!-- #TODO -->
 
-{% if best_voters %}
-<ul>
-    {% for vote in best_voters %}
-    <li>{{ vote.user.username }} - {% blocktrans count vote.num_votes as votes %}{{ votes }} vote{% plural %}{{ votes }} votes{% endblocktrans %}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+		<h3>{% trans "Last comments" %}</h3>
+		{% if last_comments %}
+		<ul>
+			{% for comment in last_comments %}
+				<li>{{ comment.user_name }} -- {{ comment.comment }}</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
 
-{% for post in posts_list %}
-<div>
-    <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-	{% rating_for post.parent %}
+		<h3>{% trans "Most active users" %}</h3>
+
+		{% if best_voters %}
+		<ul>
+		    {% for vote in best_voters %}
+		    <li>{{ vote.user__username }} - {% blocktrans with count=vote.votes_count %}{{ count }} vote{{ count|pluralize }}{% endblocktrans %}</li>
+		    {% endfor %}
+		</ul>
+		{% endif %}
+    </div>
 </div>
-{% endfor %}
 
 {% endblock %}

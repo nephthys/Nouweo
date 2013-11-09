@@ -1,23 +1,21 @@
 <div class="rating">
-	<span class="arrows">
-		{% if rating_obj.has_voted %}
-		<span{% if rating_obj.user_vote == 1 %} class="selected"{% endif %}>
-			{{ rating_obj.rating_likes }}
-			<i class="icon icon-arrow-up">up</i>
-		</span>
-		<span{% if rating_obj.user_vote == -1 %} class="selected"{% endif %}>
-			{{ rating_obj.rating_dislikes }}
-			<i class="icon icon-arrow-down">down</i>
-		</span>
-		{% else %}
-		<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="up" %}">
-			{{ rating_obj.rating_likes }}
-			<i class="icon icon-arrow-up">up</i>
-		</a>
-		<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="down" %}">
-			{{ rating_obj.rating_dislikes }}
-			<i class="icon icon-arrow-down">down</i>
-		</a>
-		{% endif %}
+	{% if rating_obj.has_voted %}
+	<span class="thumbs_up{% if rating_obj.user_vote > 0 %} selected{% endif %}">
+		<i class="icon_thumbs_up"></i>
+		{{ rating_obj.rating_likes }}
 	</span>
+	<span class="thumbs_down{% if rating_obj.user_vote < 0 %} selected{% endif %}">
+		<i class="icon_thumbs_down"></i>
+		{{ rating_obj.rating_dislikes }}
+	</span>
+	{% else %}
+	<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="up" %}" class="thumbs_up">
+		<i class="icon_thumbs_up"></i>
+		<span class="votes_count">{{ rating_obj.rating_likes }}</span>
+	</a>
+	<a href="{% url "add_vote" model=rating_model id=rating_obj.id direction="down" %}" class="thumbs_down">
+		<i class="icon_thumbs_down"></i>
+		<span class="votes_count">{{ rating_obj.rating_dislikes }}</span>
+	</a>
+	{% endif %}
 </div>

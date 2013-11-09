@@ -36,7 +36,7 @@ class VoteManager(Manager):
         ctype = ContentType.objects.get_for_model(first_object)
 
         kwargs = dict(
-            object_id__in=object_ids,
+            object_pk__in=object_ids,
             content_type=ctype,
             user=user
         )
@@ -44,12 +44,12 @@ class VoteManager(Manager):
         if status is not None:
             kwargs['status'] = int(status)
 
-        queryset = self.filter(**kwargs).values('object_id', 'value',
+        queryset = self.filter(**kwargs).values('object_pk', 'value',
                                                 'user_id')
 
         vote_dict = {}
         for row in queryset:
-            vote_dict[row['object_id']] = {
+            vote_dict[row['object_pk']] = {
                 'value': int(row['value']),
                 'user_id': int(row['user_id']),
             }

@@ -49,7 +49,7 @@ class PostType(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,
                                    related_name='user_created',
                                    null=True, blank=True)
-    updated_at = models.DateTimeField(_('last update'), auto_now=True)
+    updated_at = models.DateTimeField(_('last update'), null=True, blank=True)
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,
                                    related_name='user_updated',
                                    null=True, blank=True)
@@ -290,6 +290,7 @@ class NewsForm(ModelForm):
                 news.created_by = self.request.user
             else:
                 news.updated_by = self.request.user
+                news.updated_at = datetime.datetime.now()
         news.save()
 
         if not is_short:

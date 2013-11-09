@@ -29,13 +29,15 @@ from django.http import Http404, HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect
 from models import PostType, News, Picture, Category, Version, Idea, \
     IdeaForm, NewsForm
-from community.models import ThreadedComment
+from community.models import ThreadedComment, Vote
 from community.decorators import permissions_required
 
 def homepage(request, page=0):
     status_allowed = [3]
     if request.user.is_authenticated():
         status_allowed = [1, 3]
+        idea = Idea.objects.get(pk=5)
+        print idea.rating.delete()
 
     posts_list = PostType.objects.filter(status__in=status_allowed) \
                          .order_by('-updated_at') \
@@ -100,8 +102,8 @@ def view_posts_pending(request):
 
     post_ctype = ContentType.objects.get_for_model(PostType)
 
-    best_voters = Rating.objects.filter(content_type=post_ctype) \
-        .annotate(num_votes=Count('user')).order_by('-num_votes')[:10]
+    best_voters = Vote.objects.values('user__username').filter(content_type=post_ctype) \
+        .annotate(votes_count=Count('user')).order_by('-votes_count')[:10]
 
     last_comments = ThreadedComment.objects.filter(content_type=post_ctype) \
         .select_related().order_by('-created_at')[:10]
@@ -162,12 +164,12 @@ def select_revision(request, cat, slug, revision):
                                 kwargs={'cat': cat, 'slug': slug}))
 
 
-@permissions_required(privilege='delete_revision')
+@permissions_required(privilege='posts.delete_version')
 def delete_revision(request, cat, slug, revision):
     news = get_object_or_404(News, slug=slug)
     rev = get_object_or_404(Version, pk=revision)
 
-    if news.nb_versions > 1:
+    if news.versions_count > 1:
         if int(news.last_version.id) == int(rev.id):
             prev_rev = Version.objects.filter(news=news) \
                               .filter(id__lt=rev.id).order_by('-created_at')[0]

@@ -42,7 +42,7 @@ class RatingManager(object):
     def all(self, status=None):
         kwargs = dict(
             content_type=self.get_content_type(),
-            object_id=self.instance.pk
+            object_pk=self.instance.pk
         )
 
         if status is not None:
@@ -59,7 +59,7 @@ class RatingManager(object):
 
         kwargs = dict(
             content_type=self.get_content_type(),
-            object_id=self.instance.pk,
+            object_pk=self.instance.pk,
             user=user
         )
 
@@ -72,9 +72,6 @@ class RatingManager(object):
         except Vote.DoesNotExist:
             kwargs.update(defaults)
             vote, added = Vote.objects.create(**kwargs), True
-
-        if added:
-            self.update_count()
 
         return {'added': added, 'value': vote.value}
 
@@ -114,10 +111,25 @@ class RatingManager(object):
 
         return output
 
+    def delete(self, user=None, status=None):
+        kwargs = dict(
+            content_type=self.get_content_type(),
+            object_pk=self.instance.pk
+        )
+
+        if user is not None:
+            kwargs['user'] = user
+
+        if status is not None:
+            kwargs['status'] = int(status)
+
+        from models import Vote
+        Vote.objects.filter(**kwargs).delete()
+
     def has_voted(self, user, status=None):
         kwargs = dict(
             content_type=self.get_content_type(),
-            object_id=self.instance.pk,
+            object_pk=self.instance.pk,
             user=user
         )
 
@@ -144,20 +156,21 @@ class RatingCreator(object):
         return RatingManager(instance, self.field)
 
 
-class RatingField(IntegerField):
+class RatingField(GenericRelation):
     def __init__(self, *args, **kwargs):
         self.can_change_vote = kwargs.pop('can_change_vote', False)
         self.allow_delete = kwargs.pop('allow_delete', False)
         self.count_status = kwargs.pop('count_status', None)
 
-        kwargs['editable'] = False
-        kwargs['default'] = 0
-        kwargs['blank'] = True
+        kwargs.setdefault('object_id_field', 'object_pk')
+        kwargs.setdefault('to', 'community.Vote')
 
         super(RatingField, self).__init__(*args, **kwargs)
 
     def contribute_to_class(self, cls, name):
         self.name = name
+
+        super(RatingField, self).contribute_to_class(cls, name)
 
         fields_kwargs = dict(editable=False, default=0, blank=True)
 
@@ -175,6 +188,30 @@ class RatingField(IntegerField):
 
         field = RatingCreator(self)
         setattr(cls, name, field)
+
+        post_save.connect(self.related_items_changed)
+        post_delete.connect(self.related_items_changed)
+
+    def related_items_changed(self, **kwargs):
+        try:
+            to = self.rel.to
+            if isinstance(to, basestring):
+                to = get_model(*to.split('.', 1))
+            if not isinstance(kwargs['instance'], to):
+                raise TypeError
+        except (TypeError, ValueError):
+            return
+        for_model = kwargs['instance'].content_type.model_class()
+        if issubclass(for_model, self.model):
+            instance_id = kwargs['instance'].object_pk
+            try:
+                instance = for_model.objects.get(id=instance_id)
+            except self.model.DoesNotExist:
+                return
+            if hasattr(instance, 'get_content_model'):
+                instance = instance.get_content_model()
+            related_manager = getattr(instance, self.name)
+            output = related_manager.update_count()
 
 
 class CommentsField(GenericRelation):

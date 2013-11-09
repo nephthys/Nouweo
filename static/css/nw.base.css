@@ -1,0 +1,39 @@
+body {
+	font-size: 0.85em;
+}
+
+.row.full-width { width: 100%; max-width: 100%; }
+
+.icon_thumbs_up, .icon_thumbs_down {
+	display: inline-block;
+	width: 26px;
+	height: 26px;
+	vertical-align: middle;
+	background: url(../images/icons/thumbs_up.png) no-repeat;
+}
+
+.icon_thumbs_down {
+	background: url(../images/icons/thumbs_down.png) no-repeat;
+}
+
+.rating a.thumbs_up, .rating a.thumbs_down, .rating span.thumbs_up, .rating span.thumbs_down {
+	color: #AAAAAA;
+}
+
+.rating a:first-child, .rating span:first-child {
+	margin-right: 10px;
+}
+
+.rating a.thumbs_up:hover, .rating span.thumbs_up.selected {
+	color: #5da423;
+}
+.rating a.thumbs_up:hover .icon_thumbs_up, .rating span.thumbs_up.selected .icon_thumbs_up {
+	background-image: url(../images/icons/thumbs_up_selected.png);
+}
+
+.rating a.thumbs_down:hover, .rating span.thumbs_down.selected {
+	color: #c60f13;
+}
+.rating a.thumbs_down:hover .icon_thumbs_down, .rating span.thumbs_down.selected .icon_thumbs_down {
+	background-image: url(../images/icons/thumbs_down_selected.png);
+}
