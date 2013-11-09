@@ -122,8 +122,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'mezzanine.core',
-    'mezzanine.generic',
     'posts',
     'community',
 )

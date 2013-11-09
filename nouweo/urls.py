@@ -13,7 +13,6 @@ urlpatterns = patterns('',
 
     url(r'^comments/posted/$', comment_posted),
     url(r'^comments/', include('django.contrib.comments.urls')),
-    ('^', include('mezzanine.urls')),
 
     url(r'^add/news/$', add_news, name='add_news'),
     url(r'^edit/news/(?P<id>\d+)/$', edit_news, name='edit_news'),

@@ -29,7 +29,6 @@ from django.utils.translation import ugettext as _
 
 from model_utils.managers import InheritanceManager
 
-from mezzanine.generic.fields import KeywordsField
 from community.fields import RatingField, CommentsField
 
 import datetime
@@ -67,7 +66,6 @@ class PostType(models.Model):
 
     rating = RatingField(count_status='status')
     comments = CommentsField()
-    keywords = KeywordsField()
 
     objects = InheritanceManager()
 

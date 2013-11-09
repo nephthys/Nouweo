@@ -24,7 +24,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from mezzanine.generic.models import ThreadedComment
 from posts.models import PostType, News, Picture
 from models import Vote, ThreadedComment
 

@@ -36,8 +36,6 @@ def homepage(request, page=0):
     status_allowed = [3]
     if request.user.is_authenticated():
         status_allowed = [1, 3]
-        idea = Idea.objects.get(pk=5)
-        print idea.rating.delete()
 
     posts_list = PostType.objects.filter(status__in=status_allowed) \
                          .order_by('-updated_at') \
