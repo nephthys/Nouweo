@@ -20,7 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.contrib import admin
 from models import *
 
-admin.site.register(News)
+
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'status', 'is_short')
+    list_filter = ('status', 'category', )
+
+admin.site.register(News, NewsAdmin)
 admin.site.register(Version)
 admin.site.register(Category)
 admin.site.register(Picture)
