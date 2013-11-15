@@ -155,7 +155,8 @@ class ThreadedCommentForm(CommentSecurityForm):
 
     def get_comment_object(self):
         if not self.is_valid():
-            raise ValueError('get_comment_object may only be called on valid forms')
+            raise ValueError(
+                'get_comment_object may only be called on valid forms')
 
         CommentModel = self.get_comment_model()
         new = CommentModel(**self.get_comment_create_data())
@@ -168,12 +169,13 @@ class ThreadedCommentForm(CommentSecurityForm):
         import markdown
 
         data = dict(
-            content_type = ContentType.objects.get_for_model(self.target_object),
-            object_pk    = force_text(self.target_object._get_pk_val()),
-            comment      = self.cleaned_data['comment'],
-            comment_html = markdown.markdown(self.cleaned_data['comment']),
-            created_at   = datetime.datetime.now(),
-            site_id      = settings.SITE_ID,
+            content_type=ContentType.objects.get_for_model(
+                self.target_object),
+            object_pk=force_text(self.target_object._get_pk_val()),
+            comment=self.cleaned_data['comment'],
+            comment_html=markdown.markdown(self.cleaned_data['comment']),
+            created_at=datetime.datetime.now(),
+            site_id=settings.SITE_ID,
             # is_public    = True,
             # is_removed   = False,
         )
