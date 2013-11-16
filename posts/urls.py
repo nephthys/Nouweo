@@ -1,8 +1,8 @@
 from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('posts.views',
-	url(r'^$', 'homepage', name='home'),
-	url(r'^add/news/$', 'add_news', name='add_news'),
+    url(r'^$', 'homepage', name='home'),
+    url(r'^add/news/$', 'add_news', name='add_news'),
     url(r'^edit/news/(?P<id>\d+)/$', 'edit_news', name='edit_news'),
     url(r'^posts/draft/$', 'view_posts_draft', name='posts_draft'),
     url(r'^posts/pending/$', 'view_posts_pending', name='posts_pending'),

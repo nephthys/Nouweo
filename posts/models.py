@@ -159,6 +159,9 @@ class News(PostType):
                                                  author.username))
         return show_first_items(list)
 
+    class Meta:
+        verbose_name_plural = "news"
+
 
 class Version(models.Model):
     news = models.ForeignKey(News, related_name='versions')
@@ -196,6 +199,9 @@ class Category(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    class Meta:
+        verbose_name_plural = "categories"
 
 
 class Idea(models.Model):

@@ -23,16 +23,16 @@ from models import *
 
 
 class KarmaPrivilegeAdmin(admin.ModelAdmin):
-	list_display = ('name', 'codename', 'minimum_points', 'users_concerned')
+    list_display = ('name', 'codename', 'minimum_points', 'users_concerned')
 
-	def name(self, obj):
-		return obj.permission.name
+    def name(self, obj):
+        return obj.permission.name
 
-	def codename(self, obj):
-		return obj.permission.codename
+    def codename(self, obj):
+        return obj.permission.codename
 
-	def users_concerned(self, obj):
-		return get_user_model().objects.filter(karma__gt=obj.minimum_points).count()
+    def users_concerned(self, obj):
+        return get_user_model().objects.filter(karma__gt=obj.minimum_points).count()
 
 admin.site.register(User)
 admin.site.register(KarmaAction)
