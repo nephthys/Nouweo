@@ -21,27 +21,35 @@
                 <ul class="post_details inline-list">
                     <li><a href="{{ post.category.get_absolute_url }}">{{ post.category.name }}</a></li>
                     <li>{% blocktrans with time=post.created_at|naturaltime user=post.created_by.username %}Created {{ time }} by {{ user }}{% endblocktrans %}</li>
-                    {% if post.updated_at %}<li>{% blocktrans with time=post.updated_at|naturaltime %}Last updated {{ time }}{% endblocktrans %}</li>{% endif %}
-                    {% if post.type == 'news' %}<li><a href="{% url "post_revisions" cat=post.category.slug slug=post.slug %}">{% blocktrans with count=post.versions_count %}{{ count }} revision{{ count|pluralize }}{% endblocktrans %}</a></li>{% endif %}
+                    {% if post.updated_at %}
+                    <li>{% blocktrans with time=post.updated_at|naturaltime %}Last updated {{ time }}{% endblocktrans %}{% if post.updated_by %} {% blocktrans with user=post.updated_by.username %}by {{ user }}{% endblocktrans %}{% endif %}</li>
+                    {% endif %}
+                    {% if post.type == 'news' %}
+                    <li><a href="{% url "post_revisions" cat=post.category.slug slug=post.slug %}">{% blocktrans with count=post.versions_count %}{{ count }} revision{{ count|pluralize }}{% endblocktrans %}</a></li>
+                    {% endif %}
                     <li><a href="{{ post.get_absolute_url }}#comments">{% blocktrans with count=post.comments_count %}{{ count }} comment{{ count|pluralize }}{% endblocktrans %}</a></li>
                 </ul>
                 <p class="post_content">{{ post.last_content_html|striptags|truncatewords:100 }}</p>
             </div>
 
             <div class="small-4 large-3 columns">
-            {% if post.type == 'news' %}
-                {% for rev in post.versions.all|dictsortreversed:"id" %}
-                <ul class="last_revisions">
-                    <li>
-                        <a class="rev_id" href="{% url "post_revision" cat=post.category.slug slug=post.slug revision=rev.id %}">#</a>
-                        <span class="right rev_date">{{ rev.created_at|naturaltime }}</span>
-                        <span class="rev_author">{{ rev.author.username }}</span>
-                    </li>
-                </ul>
-                {% endfor %}
+                {% if post.type == 'news' %}
+                    {% with revisions=post.versions.all %}
+                    {% if revisions %}
+                    <ul class="last_revisions">
+                    {% for rev in revisions|dictsortreversed:"id"|slice:":5" %}
+                        <li>
+                            <a class="rev_id" href="{% url "post_revision" cat=post.category.slug slug=post.slug revision=rev.id %}">#</a>
+                            <span class="right rev_date">{{ rev.created_at|naturaltime }}</span>
+                            <span class="rev_author">{{ rev.author.username }}</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% endwith %}
+                {% endif %}
                 <a href="{{ post.get_absolute_url_edit }}" class="small button expand" style="margin-bottom: .5em;">{% trans "Contribute" %}</a>
                 <a href="{% url "post_propose" post.id %}" class="small button expand" style="margin-bottom: 0;">{% trans "Propose" %}</a>
-            {% endif %}
             </div>
         </div>
         {% endfor %}

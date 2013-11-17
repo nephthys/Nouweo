@@ -12,7 +12,9 @@
     {{ post.category.name }}<br /><br />
     <a class="comments" href="{{ post.get_absolute_url }}">{{ post.comments_count }} comment{{ post.comments_count|pluralize }} </a>
 	
+	{% if post.status == 2 or post.status == 3 %}
 	{% rating_for post model="post" %}
+	{% endif %}
 </div>
 {% endfor %}
 

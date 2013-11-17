@@ -73,9 +73,9 @@ def view_posts_draft(request):
         .order_by('-rating_ratio')
 
     news_list = News.objects.filter(status=1) \
-                    .order_by('-updated_at') \
-                    .select_related('category', 'last_version',
-                                    'last_version__author') \
+                    .order_by('-updated_at', '-created_at') \
+                    .select_related('category', 'last_version', 'created_by', \
+                                    'updated_by', 'last_version__author') \
                     .prefetch_related('versions', 'versions__author')
 
     last_revisions = Version.objects.select_related().filter(news__status=1) \
@@ -114,13 +114,19 @@ def view_posts_pending(request):
 
 def view_post(request, cat, slug, revision=0):
     try:
+        revision_obj = None
         post = PostType.objects.filter(slug=slug) \
                        .select_related('category', 'news__last_version') \
                        .select_subclasses()[0]
+
+        if post.type == 'news' and revision != 0:
+            revision_obj = get_object_or_404(Version, news=post, pk=revision)
     except IndexError, PostType.DoesNotExist:
         raise Http404
 
-    return render(request, 'view_post.html', {'post': post})
+    return render(request, 'view_post.html', {
+        'post': post, 'revision': revision_obj
+    })
 
 
 def view_revisions(request, cat, slug):

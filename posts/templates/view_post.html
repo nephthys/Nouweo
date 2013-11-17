@@ -1,12 +1,18 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n humanize %}
 {% load posts_tags %}
 
 {% block content %}
 
 <h2>{{ post.type }} - <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
 
+{% if post.type == 'news' and post.last_version != revision and revision != None %}
+<p>{% blocktrans with user=revision.author.username time=revision.created_at|naturaltime %}You are reading the revision created {{ time }} by {{ user }}{% endblocktrans %} &mdash; <a href="{{ post.get_absolute_url }}">{% trans "See the latest revision" %}</a></p>
+
+{{ revision.content_html|safe }}
+{% else %}
 {{ post.last_content_html|safe }}
+{% endif %}
 
 <a href="{{ post.get_absolute_url_edit }}">edit</a>
 

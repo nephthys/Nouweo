@@ -176,10 +176,22 @@ class Version(models.Model):
     chars_count = models.PositiveSmallIntegerField(default=0)
     chars_diff = models.SmallIntegerField(default=0)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         import markdown
         self.content_html = markdown.markdown(self.content)
-        super(Version, self).save()
+
+        if self.news.last_version:
+            last_version = self.news.last_version
+            self.chars_diff = self.chars_count - last_version.chars_count
+
+        try:
+            last_number = Version.objects.filter(news=self.news) \
+                                         .order_by('-number')[0]
+            self.number = last_number.number + 1
+        except IndexError, Version.DoesNotExist:
+            pass
+
+        super(Version, self).save(*args, **kwargs)
 
 
 class Picture(PostType):
@@ -281,6 +293,7 @@ class NewsForm(ModelForm):
 
     def save(self, commit=True):
         content = self.cleaned_data.get('content_news', '')
+        reason = self.cleaned_data.get('reason', '')
         is_short = self.cleaned_data.get('is_short')
         is_minor = self.cleaned_data.get('is_minor')
         ip = self.request.META['REMOTE_ADDR']
@@ -300,13 +313,12 @@ class NewsForm(ModelForm):
         if not is_short:
             version = Version(news=news, author=self.request.user, ip=ip,
                               content=content, is_minor=is_minor,
-                              chars_count=len(content))
+                              reason=reason, chars_count=len(content))
             version.save()
 
             news.last_version = version
             news.versions_count += 1
-
-        news.save()
+            news.save()
 
         return news
 
