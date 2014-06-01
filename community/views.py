@@ -26,7 +26,8 @@ from django.shortcuts import render, get_object_or_404
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect, Http404
-from posts.models import PostType, Idea
+from ideas.models import Idea
+from posts.models import PostType
 from models import ThreadedComment
 
 

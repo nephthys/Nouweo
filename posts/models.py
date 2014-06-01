@@ -29,6 +29,11 @@ from django.utils.translation import ugettext as _
 
 from model_utils.managers import InheritanceManager
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Button, Div, Row, Field, \
+                                MultiField
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions, \
+                                   InlineCheckboxes, InlineRadios
 from community.fields import RatingField, CommentsField
 
 import datetime
@@ -216,69 +221,14 @@ class Category(models.Model):
         verbose_name_plural = "categories"
 
 
-class Idea(models.Model):
-    CHOICE_STATUS = (
-        (0, _('refused')),
-        (1, _('pending')),
-        (2, _('completed')),
-    )
-    title = models.CharField(_('title'), max_length=150)
-    content = models.TextField(_('content'))
-    created_at = models.DateTimeField(_('created date'), auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                   related_name='created_by',
-                                   null=True, blank=True)
-    updated_at = models.DateTimeField(_('last update'), null=True, blank=True)
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                   related_name='updated_by',
-                                   null=True, blank=True)
-    completed_at = models.DateTimeField(_('completed date'), null=True,
-                                        blank=True)
-    completed_by = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                     related_name='completed_by',
-                                     null=True, blank=True)
-    completed_post = models.ForeignKey(PostType, null=True, blank=True)
-    status = models.PositiveSmallIntegerField(default=1, choices=CHOICE_STATUS)
-    ip = models.IPAddressField(_('IP address'))
-    rating = RatingField(count_status='status')
-
-    def get_absolute_url(self):
-        return '%s?idea_id=%d' % (reverse('posts_draft'), self.id)
-
-
-class IdeaForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        super(IdeaForm, self).__init__(*args, **kwargs)
-
-    def save(self, commit=True):
-        idea = super(IdeaForm, self).save(commit=False)
-        if not self.instance.pk:
-            if self.request.user:
-                idea.created_by = self.request.user
-            if self.request.META['REMOTE_ADDR']:
-                idea.ip = self.request.META['REMOTE_ADDR']
-        else:
-            if self.request.user:
-                idea.updated_by = self.request.user
-
-            idea.updated_at = datetime.datetime.now()
-        idea.save()
-        return idea
-
-    class Meta:
-        model = Idea
-        fields = ['title', 'content']
-
-
 class NewsForm(ModelForm):
     CHOICE = (
         (0, _('news')),
         (1, _('brief'))
     )
 
-    is_short = forms.BooleanField(label=_('Type'), required=False,
-                                  widget=forms.RadioSelect(choices=CHOICE))
+    is_short = forms.ChoiceField(label=_('Type'), required=False, \
+                                 choices=CHOICE, widget = forms.RadioSelect)
     content_news = forms.CharField(label=_('Content'),
                                    help_text=_('Write with markdown'),
                                    widget=forms.Textarea(
@@ -288,6 +238,23 @@ class NewsForm(ModelForm):
                                   required=False)
 
     def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-2 control-label'
+        self.helper.field_class = 'col-sm-10'
+        self.helper.layout = Layout(
+            InlineRadios('is_short'),
+            Field('title'),
+            Field('category'),
+            Field('content_news', rows='3', css_class='input-xlarge'),
+            Field('reason'),
+            Field('status'),
+            Field('is_minor'),
+            Field('closed_comments'),
+            FormActions(
+                Submit('send', _('Send'), css_class='btn-primary')
+            )
+        )
         self.request = kwargs.pop('request', None)
         super(NewsForm, self).__init__(*args, **kwargs)
 

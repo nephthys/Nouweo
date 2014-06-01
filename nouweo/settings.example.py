@@ -130,11 +130,16 @@ INSTALLED_APPS = (
     'django.contrib.comments',
     'django.contrib.admin',
     'posts',
+    'ideas',
     'community',
+    'crispy_forms',
+    'django_permanent',
+    'south',
 )
 
 COMMENTS_APP = 'community'
 AUTH_USER_MODEL = 'community.User'
+PERMANENT_FIELD = 'deleted'
 
 RATINGS_RANGE = (-1, 1)
 RATINGS_ACCOUNT_REQUIRED = True
@@ -143,6 +148,8 @@ COMMENTS_ACCOUNT_REQUIRED = True
 GRAPPELLI_INSTALLED = False
 PACKAGE_NAME_FILEBROWSER = 'filebrowser_safe'
 PACKAGE_NAME_GRAPPELLI = 'grappelli_safe'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # NW Specifics
 

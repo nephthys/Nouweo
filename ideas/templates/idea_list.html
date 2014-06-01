@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% load i18n humanize %}
+{% load community_tags %}
+
+{% block breadcrumbs %}
+<li class="active">{% trans "Ideas" %}</li>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+<div class="row">
+    <div class="col-sm-8">
+        <h1 class="small_title float_title">{% trans "Suggestion box" %}</h1>
+        <ul class="nav nav-pills nav-pills-medium">
+            <li{% if status == 0 %} class="active"{% endif %}><a href="{% url "list_ideas" %}?status=0&amp;query={{ query }}">{% trans "All" %}</a></li>
+
+            <li{% if status == 1 %} class="active"{% endif %}><a href="{% url "list_ideas" %}?status=1&amp;query={{ query }}">{% trans "Refused" %}</a></li>
+
+            <li{% if status == 2 %} class="active"{% endif %}><a href="{% url "list_ideas" %}?status=2&amp;query={{ query }}">{% trans "Pending" %}</a></li>
+
+            <li{% if status == 3 %} class="active"{% endif %}><a href="{% url "list_ideas" %}?status=3&amp;query={{ query }}">{% trans "Completed" %}</a></li>
+        </ul>
+    </div>
+
+    <div class="col-sm-4">
+        <form action="." method="get" >
+            <p class="input-group">
+                <input type="text" class="form-control" id="query" name="query" value="{{ query }}" placeholder="{% trans "Search" %}" />
+                <span class="input-group-btn">
+                    <input type="submit" class="btn btn-primary" value="{% trans "Go" %}" />
+                </span>
+            </p>
+            <input type="hidden" name="status" value="{{ status }}" />
+        </form>
+    </div>
+</div>
+
+{% for idea in object_list %}
+<div class="idea_row{% if idea.deleted %} deleted{% endif %}">
+    {% if idea.status == 2 %}
+    <div class="vote">
+        {% rating_for idea model="idea" %}
+    </div>
+    {% endif %}
+
+    <p class="title"><strong>{{ idea.title }}</strong> {{ idea.content }}</p>
+
+    <p class="details">{% blocktrans with time=idea.created_at|naturaltime user=idea.created_by.username %}Created {{ time }} by {{ user }}{% endblocktrans %}{% if idea.updated_at %} 
+
+    - {% blocktrans with time=idea.updated_at|naturaltime %}Last updated {{ time }}{% endblocktrans %}{% if idea.updated_by %} {% blocktrans with user=idea.updated_by.username %}by {{ user }}{% endblocktrans %}{% endif %}
+    {% endif %}
+
+    - <a href="{% url "edit_idea" pk=idea.pk %}">{% trans "Edit" %}</a> - <a href="{% url "delete_idea" pk=idea.pk %}">{% trans "Delete" %}</a></p>
+</div>
+{% endfor %}
+
+{% if is_paginated %}
+<ul class="pagination">
+    {% if page_obj.has_previous %}
+        <li><a href="{% url "list_ideas" %}?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+    {% endif %}
+
+    {% for pagenum, url in page_urls %}
+        {% if page.number == pagenum %}
+            <li class="active">
+                <a title="Current Page" href="#">{{ pagenum }}</a>
+            </li>
+        {% else %}
+            <li>
+                <a title="Page {{ pagenum }} of {{ page.paginator.num_pages }}" href="{{ url }}">{{ pagenum }}</a>
+            </li>
+        {% endif %}
+    {% endfor %}
+
+    <!-- <span class="page-current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+    </span> -->
+    {% if page_obj.has_next %}
+        <li><a href="{% url "list_ideas" %}?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+    {% endif %}
+</ul>
+{% endif %}
+
+</div>
+</div>
+
+{% endblock %}

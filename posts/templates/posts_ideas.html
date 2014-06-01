@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load i18n humanize %}
+{% load community_tags %}
+
+{% block breadcrumbs %}
+{% if not idea_id %}
+<li class="active">{% trans "Ideas" %}</li>
+{% else %}
+<li><a href="{% url "posts_ideas" %}">{% trans "Ideas" %}</a></li>
+<li class="active">www</li>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<ul class="ideas_list">
+    {% for idea in ideas_list %}
+    <li>
+        <strong>{{ idea.title }}</strong> {{ idea.content|linebreaksbr }}
+        <a href="{% url "posts_draft" %}?idea_id={{ idea.id }}">{% trans "edit" %}</a><br /><br />
+
+        {% rating_for idea model="idea" %}
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,39 +1,76 @@
-body {
-	font-size: 0.85em;
+h1.small_title {
+    margin: 0;
+    font-size: 20px;
 }
 
-.row.full-width { width: 100%; max-width: 100%; }
+h1.float_title {
+    float: left;
+    padding-top: 5px;
+    margin-right: 30px;
+}
+
+.nav-pills > li.disabled > span {
+    display: block;
+    padding: 10px 15px;
+    font-weight: bold;
+    color: #999;
+}
+
+.nav-pills.nav-pills-medium > li > a, .nav-pills.nav-pills-medium > li.disabled > span {
+    padding: 7px 12px;
+}
 
 .icon_thumbs_up, .icon_thumbs_down {
-	display: inline-block;
-	width: 26px;
-	height: 26px;
-	vertical-align: middle;
-	background: url(../images/icons/thumbs_up.png) no-repeat;
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    vertical-align: middle;
+    background: url(../images/icons/thumbs_up.png) no-repeat;
 }
 
 .icon_thumbs_down {
-	background: url(../images/icons/thumbs_down.png) no-repeat;
+    background: url(../images/icons/thumbs_down.png) no-repeat;
 }
 
 .rating a.thumbs_up, .rating a.thumbs_down, .rating span.thumbs_up, .rating span.thumbs_down {
-	color: #AAAAAA;
+    color: #AAAAAA;
 }
 
 .rating a:first-child, .rating span:first-child {
-	margin-right: 10px;
+    margin-right: 10px;
 }
 
 .rating a.thumbs_up:hover, .rating span.thumbs_up.selected {
-	color: #5da423;
+    color: #5da423;
 }
 .rating a.thumbs_up:hover .icon_thumbs_up, .rating span.thumbs_up.selected .icon_thumbs_up {
-	background-image: url(../images/icons/thumbs_up_selected.png);
+    background-image: url(../images/icons/thumbs_up_selected.png);
 }
 
 .rating a.thumbs_down:hover, .rating span.thumbs_down.selected {
-	color: #c60f13;
+    color: #c60f13;
 }
 .rating a.thumbs_down:hover .icon_thumbs_down, .rating span.thumbs_down.selected .icon_thumbs_down {
-	background-image: url(../images/icons/thumbs_down_selected.png);
+    background-image: url(../images/icons/thumbs_down_selected.png);
+}
+
+
+.idea_row {
+    padding: 13px 0;
+    border-bottom: 1px solid #DDDDDD;
+}
+
+.idea_row .vote {
+    padding: 10px;
+    float: right;
+}
+
+.idea_row p.title {
+    margin-bottom: 5px;
+}
+
+.idea_row p.details {
+    margin: 0;
+    font-size: .85em;
+    color: #666666;
 }

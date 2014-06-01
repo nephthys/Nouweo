@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 
 
@@ -15,9 +16,9 @@ def permissions_required(privilege=None):
                             priv = privilege
                         permission = request.user.has_privilege(priv)
 
-            if permission:
-                return func(request, *args, **kwargs)
-            else:
-                return HttpResponse('Unauthorized', status=401)
+            if not permission:
+                raise PermissionDenied
+
+            return func(request, *args, **kwargs)
         return inner
     return decorator

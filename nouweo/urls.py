@@ -6,5 +6,6 @@ admin.autodiscover()
 urlpatterns = patterns('',
     ('^admin/', include(admin.site.urls)),
     ('^', include('community.urls')),
+    ('^ideas/', include('ideas.urls')),
     ('^', include('posts.urls')),
 )

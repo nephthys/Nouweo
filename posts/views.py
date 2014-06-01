@@ -27,8 +27,9 @@ from django.template import RequestContext, defaultfilters
 from django.utils.translation import ugettext as _
 from django.http import Http404, HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect
-from models import PostType, News, Picture, Category, Version, Idea, \
-    IdeaForm, NewsForm
+from models import PostType, News, Picture, Category, Version, NewsForm
+from ideas.models import Idea
+from ideas.forms import IdeaForm
 from community.models import ThreadedComment, Vote
 from community.decorators import permissions_required
 
@@ -61,15 +62,9 @@ def view_posts_draft(request):
     if idea_id:
         idea = get_object_or_404(Idea, pk=idea_id)
 
-    if request.method == 'POST':
-        form = IdeaForm(request.POST, instance=idea, request=request)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect(reverse('posts_draft'))
-    else:
-        form = IdeaForm(instance=idea)
+    form = IdeaForm(instance=idea, request=request, small_display=True)
 
-    ideas_list = Idea.objects.select_related().filter(status=1) \
+    ideas_list = Idea.objects.select_related().filter(status=2) \
         .order_by('-rating_ratio')
 
     news_list = News.objects.filter(status=1) \
@@ -86,7 +81,7 @@ def view_posts_draft(request):
 
     return render(request, 'posts_draft.html', {
         'ideas_list': ideas_list, 'news_list': news_list,
-        'last_revisions': last_revisions, 'form': form, 'idea_id': idea_id
+        'last_revisions': last_revisions, 'form': form, 'idea_id': idea_id,
     })
 
 
@@ -110,7 +105,6 @@ def view_posts_pending(request):
         'posts_list': posts_list, 'best_voters': best_voters,
         'last_comments': last_comments
     })
-
 
 def view_post(request, cat, slug, revision=0):
     try:

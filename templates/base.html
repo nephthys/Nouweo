@@ -3,8 +3,8 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <title>Nouweo</title>
-        <link rel="stylesheet" href="{% static "css/normalize.css" %}" />
-        <link rel="stylesheet" href="{% static "css/foundation.min.css" %}" />
+        <link rel="stylesheet" href="{% static "css/bootstrap.3.1.1.min.css" %}" />
+        <link rel="stylesheet" href="{% static "css/bootstrap-theme.3.1.1.min.css" %}" />
         <link rel="stylesheet" href="{% static "css/nw.base.css" %}" />
     </head>
     <body>
@@ -12,22 +12,29 @@
     <ul id="navigation" class="button-group radius">
         <li><a href="{% url "posts_draft" %}" class="small button">{% trans "Draft" %}</a></li>
         <li><a href="{% url "posts_pending" %}" class="small button">{% trans "Pending" %}</a></li>
-        <li><a href="{% url "add_news" %}" class="small button">{% trans "Write" %}</a></li>
+        <li class="dropdown">
+            <a href="{% url "add_news" %}" class="small button" id="dropAddContent" role="button" data-toggle="dropdown" data-target="#">{% trans "Write" %} <span class="caret"></span></a>
+
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropAddContent">
+                <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "add_news" %}">{% trans "News" %}</a></li>
+                <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "add_news" %}">{% trans "Picture" %}</a></li>
+            </ul>
+        </li>
     </ul>
 
-    <ul class="breadcrumbs">
+    <ol class="breadcrumb">
         <li><a href="{% url "home" %}">{% trans "Home" %}</a></li>
         {% block breadcrumbs %}{% endblock %}
-    </ul>
+    </ol>
 
     {% block content %}{% endblock %}
 
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="{% static "js/jquery.2.1.1.min.js" %}"></script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>
     <script src="{% static "js/common.js" %}"></script>
-    <script src="{% static "js/foundation.min.js" %}"></script>
     <script>
-        $(document).foundation();
-    </script>
-    
+    $(function(){
+        $('.dropdown-toggle').dropdown();
+    })
     </body>
 </html>
