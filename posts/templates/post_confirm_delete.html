@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+
+<div class="container-fluid">
+<form role="form" action="" method="post">
+    {% csrf_token %}
+    <h2>{% blocktrans with obj=object %}Are you sure you want to delete {{ obj }} ?{% endblocktrans %}</h2>
+    <input type="submit" value="{% trans "Yes, delete" %}" class="btn btn-primary" /> <a href="{% url "list_ideas" %}" class="btn btn-danger">{% trans "No" %}</a>
+</form>
+</div>
+
+{% endblock content %}

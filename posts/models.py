@@ -79,8 +79,7 @@ class PostType(models.Model):
                                             'slug': self.slug})
 
     def get_absolute_url_edit(self):
-        if self.type is 'news':
-            return reverse('edit_news', kwargs={'id': self.id})
+        return reverse('edit_post', kwargs={'pk': self.pk})
 
     def get_first_author(self):
         return '<a href="%s">%s</a>' % (
@@ -261,7 +260,7 @@ class NewsForm(ModelForm):
     def save(self, commit=True):
         content = self.cleaned_data.get('content_news', '')
         reason = self.cleaned_data.get('reason', '')
-        is_short = self.cleaned_data.get('is_short')
+        is_short = int(self.cleaned_data.get('is_short'))
         is_minor = self.cleaned_data.get('is_minor')
         ip = self.request.META['REMOTE_ADDR']
 
@@ -277,7 +276,8 @@ class NewsForm(ModelForm):
                 news.updated_at = datetime.datetime.now()
         news.save()
 
-        if not is_short:
+        if is_short == 0:
+            print 'is_short or not ??'
             version = Version(news=news, author=self.request.user, ip=ip,
                               content=content, is_minor=is_minor,
                               reason=reason, chars_count=len(content))
@@ -293,3 +293,5 @@ class NewsForm(ModelForm):
         model = News
         fields = ['is_short', 'title', 'content_news', 'reason', 'category',
                   'is_minor', 'status', 'closed_comments']
+
+import signals

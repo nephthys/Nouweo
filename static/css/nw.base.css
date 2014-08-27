@@ -74,3 +74,8 @@ h1.float_title {
     font-size: .85em;
     color: #666666;
 }
+
+.navbar {
+    border-radius: 0;
+    margin-bottom: 0;
+}

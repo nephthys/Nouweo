@@ -5,13 +5,14 @@
 
 {% block content %}
 
-<div class="row full-width" id="container">
-    <div class="large-9 columns" id="content">
-    	{% voted_for_objects posts_list %}
-		{% for post in posts_list %}
+<div class="container-fluid">
+<div class="row">
+    <div class="col-xs-12 col-md-8 col-lg-9" id="content">
+    	{% voted_for_objects object_list %}
+		{% for post in object_list %}
 		<h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-        <div class="row full-width">
-            <div class="small-10 columns">
+        <div class="row">
+            <div class="col-sm-8 col-md-9">
                 <ul class="post_details inline-list">
                     <li><a href="{{ post.category.get_absolute_url }}">{{ post.category.name }}</a></li>
                     <li>{% blocktrans with time=post.created_at|naturaltime user=post.created_by.username %}Created {{ time }} by {{ user }}{% endblocktrans %}</li>
@@ -22,14 +23,14 @@
                 <p class="post_content">{{ post.last_content_html|striptags|truncatewords:100 }}</p>
             </div>
 
-            <div class="small-2 columns">
+            <div class="col-sm-4 col-md-3">
 				{% rating_for post model="post" %}
             </div>
         </div>
 		{% endfor %}
     </div>
 
-    <div class="large-3 columns" id="right_sidebar">
+    <div class="col-xs-6 col-md-4 col-lg-3" id="right_sidebar">
 		<h3>{% trans "Almost published" %}</h3>
 		<!-- #TODO -->
 
@@ -52,6 +53,7 @@
 		</ul>
 		{% endif %}
     </div>
+</div>
 </div>
 
 {% endblock %}

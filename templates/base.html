@@ -8,19 +8,34 @@
         <link rel="stylesheet" href="{% static "css/nw.base.css" %}" />
     </head>
     <body>
-    
-    <ul id="navigation" class="button-group radius">
-        <li><a href="{% url "posts_draft" %}" class="small button">{% trans "Draft" %}</a></li>
-        <li><a href="{% url "posts_pending" %}" class="small button">{% trans "Pending" %}</a></li>
-        <li class="dropdown">
-            <a href="{% url "add_news" %}" class="small button" id="dropAddContent" role="button" data-toggle="dropdown" data-target="#">{% trans "Write" %} <span class="caret"></span></a>
 
-            <ul class="dropdown-menu" role="menu" aria-labelledby="dropAddContent">
-                <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "add_news" %}">{% trans "News" %}</a></li>
-                <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "add_news" %}">{% trans "Picture" %}</a></li>
-            </ul>
-        </li>
-    </ul>
+    <nav class="navbar navbar-inverse" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{% url "home" %}">Nouweo</a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="{% url "posts_draft" %}">{% trans "Draft" %}</a></li>
+                    <li><a href="{% url "posts_pending" %}">{% trans "Pending" %}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% trans "Write" %} <span class="caret"></span></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="{% url "add_news" %}">{% trans "News" %}</a></li>
+                            <li><a href="{% url "add_news" %}">{% trans "Picture" %}</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
 
     <ol class="breadcrumb">
         <li><a href="{% url "home" %}">{% trans "Home" %}</a></li>
@@ -36,5 +51,6 @@
     $(function(){
         $('.dropdown-toggle').dropdown();
     })
+    </script>
     </body>
 </html>

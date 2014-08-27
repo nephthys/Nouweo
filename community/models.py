@@ -41,11 +41,12 @@ class User(AbstractUser):
     comments = models.IntegerField(default=0)
     location = models.CharField(max_length=150, null=True, blank=True)
 
+    last_visit = models.DateTimeField(null=True, blank=True)
     subscribe_newsletter = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    def has_privilege(self, privilege_id, **kwargs):
+    def has_karma_privilege(self, privilege_id, **kwargs):
         try:
             privilege = KarmaPrivilege.objects.get(permission__codename=
                                                    privilege_id)

@@ -21,106 +21,251 @@ from django.db.models import Count
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext, defaultfilters
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.http import Http404, HttpResponse, HttpResponseNotFound, \
     HttpResponseRedirect
-from models import PostType, News, Picture, Category, Version, NewsForm
+from vanilla import ListView, CreateView, DetailView, UpdateView, DeleteView
+from .models import PostType, News, Picture, Category, Version, NewsForm
 from ideas.models import Idea
 from ideas.forms import IdeaForm
 from community.models import ThreadedComment, Vote
-from community.decorators import permissions_required
+from community.decorators import privileges_required
 
-def homepage(request, page=0):
-    status_allowed = [3]
-    if request.user.is_authenticated():
-        status_allowed = [1, 3]
+class PostCRUDView(object):
+    model = PostType
+    paginate_by = 20
 
-    posts_list = PostType.objects.filter(status__in=status_allowed) \
-                         .order_by('-updated_at') \
-                         .select_related('category', 'news__last_version',
-                                         'news__last_version__author') \
-                         .select_subclasses()
+class PostContribView(object):
+    model = PostType
+    paginate_by = 20
 
-    for post in posts_list:
-        print post.parent
-        # print post.__dict__
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(PostContribView, self).dispatch(*args, **kwargs)
 
-    return render(request, 'homepage.html', {'posts_list': posts_list})
+class PostHomepage(PostCRUDView, ListView):
+    template_name = 'homepage.html'
 
+    def get_queryset(self):
+        status_allowed = [3]
+        if self.request.user.is_authenticated():
+            status_allowed = [1, 3]
+        return PostType.objects.filter(status__in=status_allowed) \
+                       .order_by('-updated_at') \
+                       .select_related('category', 'news__last_version',
+                                       'news__last_version__author') \
+                       .select_subclasses()
 
-@login_required
-def view_posts_draft(request):
-    """
-    Displays a list of ideas, the form to add / update ideas, and writing posts
-    """
-    idea = None
-    idea_id = request.GET.get('idea_id', 0)
+class PostCreateNews(PostCRUDView, CreateView):
+    template_name = 'add_news.html'
 
-    if idea_id:
-        idea = get_object_or_404(Idea, pk=idea_id)
+    def get_form(self, data=None, files=None, **kwargs):
+        kwargs['request'] = self.request
+        return NewsForm(data, files, **kwargs)
 
-    form = IdeaForm(instance=idea, request=request, small_display=True)
+class PostUpdate(PostCRUDView, UpdateView):
+    template_name = 'add_news.html'
+    model = News
+    form_class = NewsForm
 
-    ideas_list = Idea.objects.select_related().filter(status=2) \
-        .order_by('-rating_ratio')
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(PostUpdate, self).dispatch(*args, **kwargs)
 
-    news_list = News.objects.filter(status=1) \
-                    .order_by('-updated_at', '-created_at') \
-                    .select_related('category', 'last_version', 'created_by', \
-                                    'updated_by', 'last_version__author') \
-                    .prefetch_related('versions', 'versions__author')
+    def get_form_class(self):
+        return NewsForm
 
-    last_revisions = Version.objects.select_related().filter(news__status=1) \
-        .order_by('-created_at')[:10]
-
-    last_comments = ThreadedComment.objects.filter(object_pk__in=news_list) \
-        .select_related().order_by('-created_at')[:10]
-
-    return render(request, 'posts_draft.html', {
-        'ideas_list': ideas_list, 'news_list': news_list,
-        'last_revisions': last_revisions, 'form': form, 'idea_id': idea_id,
-    })
-
-
-@login_required
-def view_posts_pending(request):
-    posts_list = PostType.objects.filter(status=2) \
-                         .order_by('-updated_at') \
-                         .select_related('category', 'news__last_version',
-                                         'news__last_version__author') \
-                         .select_subclasses()
-
-    post_ctype = ContentType.objects.get_for_model(PostType)
-
-    best_voters = Vote.objects.values('user__username').filter(content_type=post_ctype) \
-        .annotate(votes_count=Count('user')).order_by('-votes_count')[:10]
-
-    last_comments = ThreadedComment.objects.filter(content_type=post_ctype) \
-        .select_related().order_by('-created_at')[:10]
-
-    return render(request, 'posts_pending.html', {
-        'posts_list': posts_list, 'best_voters': best_voters,
-        'last_comments': last_comments
-    })
-
-def view_post(request, cat, slug, revision=0):
-    try:
-        revision_obj = None
-        post = PostType.objects.filter(slug=slug) \
+    def get_queryset(self):
+        # return News.objects.all()
+        return PostType.objects.all() \
                        .select_related('category', 'news__last_version') \
-                       .select_subclasses()[0]
+                       .select_subclasses()
 
-        if post.type == 'news' and revision != 0:
-            revision_obj = get_object_or_404(Version, news=post, pk=revision)
-    except IndexError, PostType.DoesNotExist:
-        raise Http404
+    def get_form(self, data=None, files=None, **kwargs):
+        kwargs['request'] = self.request
+        kwargs['initial'] = self.get_initial()
+        form_cls = self.get_form_class()
+        return form_cls(data, files, **kwargs)
 
-    return render(request, 'view_post.html', {
-        'post': post, 'revision': revision_obj
-    })
+    def get_initial(self):
+        return {
+            'is_short': int(self.object.is_short),
+            'content_news': self.object.last_content,
+            'closed_comments': self.object.closed_comments,
+        }
+
+class PostDetailView(object):
+    context_object_name = 'post'
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        return PostType.objects.all() \
+                       .select_related('category', 'news__last_version') \
+                       .select_subclasses()
+
+
+class PostDetail(PostCRUDView, PostDetailView, DetailView):
+    template_name = 'post_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PostDetail, self).get_context_data(**kwargs)
+
+        revision_id = self.kwargs.get('revision', 0)
+        revision = None
+        obj = self.get_object()
+
+        if obj.type == 'news' and revision_id != 0:
+            revision = get_object_or_404(Version, news=obj, pk=revision_id)
+
+        context['revision'] = revision
+
+        return context
+
+class PostDetailRevisions(PostCRUDView, PostDetailView, DetailView):
+    template_name = 'post_detail_revisions.html'
+
+    def compare_revisions(self, old_id, new_id):
+        if old_id is None or new_id is None:
+            return ''
+
+        from htmldiff import render_html_diff
+
+        old_rev = Version.objects.get(id=old_id).content_html
+        new_rev = Version.objects.get(id=new_id).content_html
+
+        return render_html_diff(old_rev, new_rev)
+
+    def get_context_data(self, **kwargs):
+        context = super(PostDetailRevisions, self).get_context_data(**kwargs)
+        obj = self.get_object()
+
+        old_id = self.request.GET.get('old', None)
+        new_id = self.request.GET.get('new', None)
+
+        context['revisions'] = Version.objects.select_related() \
+                                      .filter(news=obj).order_by('-created_at')
+
+        context['diff'] = self.compare_revisions(old_id, new_id)
+
+        return context
+
+class PostRevisionView(object):
+    model = Version
+    lookup_url_kwarg = 'revision'
+    news = None
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        slug = self.kwargs['slug']
+        pk = self.kwargs[self.lookup_url_kwarg]
+        try:
+            self.news = News.objects.get(slug=slug)
+            return get_object_or_404(queryset, news=self.news, pk=pk)
+        except News.DoesNotExist:
+            raise Http404
+
+    def get_success_url(self):
+        cat = self.kwargs['cat']
+        slug = self.kwargs['slug']
+        return reverse('post_revisions', kwargs={'cat': cat, 'slug': slug})
+
+
+class PostSelectRevision(PostRevisionView, DetailView):
+    @method_decorator(privileges_required('posts.delete_version'))
+    def dispatch(self, *args, **kwargs):
+        return super(PostSelectRevision, self).dispatch(*args, **kwargs)
+
+    def render_to_response(self, context):
+        obj = self.get_object()
+
+        if int(self.news.last_version.id) != int(obj.id):
+            self.news.last_content = obj.content
+            self.news.last_version = obj
+            self.news.save()
+
+        return HttpResponse('hello')
+
+
+class PostDeleteRevision(PostRevisionView, DeleteView):
+    template_name = 'post_revision_confirm_delete.html'
+
+
+class PostDelete(PostCRUDView, DeleteView):
+    template_name = 'post_confirm_delete.html'
+    success_url = '/'
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(PostDelete, self).dispatch(*args, **kwargs)
+
+
+class PostDraft(PostContribView, ListView):
+    template_name = 'post_draft.html'
+
+    def get_queryset(self):
+        return News.objects.filter(status=1) \
+                   .order_by('-updated_at', '-created_at') \
+                   .select_related('category', 'last_version', 'created_by', \
+                                   'updated_by', 'last_version__author') \
+                   .prefetch_related('versions', 'versions__author')
+
+    def get_context_data(self, **kwargs):
+        context = super(PostDraft, self).get_context_data(**kwargs)
+
+        idea = None
+        idea_id = self.request.GET.get('idea_id', 0)
+        news_list = self.get_queryset()
+
+        if idea_id:
+            idea = get_object_or_404(Idea, pk=idea_id)
+            context['idea_id'] = idea_id
+
+        context['form'] = IdeaForm(instance=idea, request=self.request, \
+                                   small_display=True)
+
+        context['ideas_list'] = Idea.objects.select_related().filter(status=2) \
+            .order_by('-rating_ratio')
+
+        context['last_revisions'] = Version.objects.select_related() \
+            .filter(news__status=1).order_by('-created_at')[:10]
+
+        context['last_comments'] = ThreadedComment.objects \
+            .filter(object_pk__in=news_list).select_related() \
+            .order_by('-created_at')[:10]
+
+        return context
+
+
+class PostPending(PostContribView, ListView):
+    template_name = 'post_pending.html'
+
+    def get_queryset(self):
+        return PostType.objects.filter(status=2) \
+                       .order_by('-updated_at') \
+                       .select_related('category', 'news__last_version',
+                                       'news__last_version__author') \
+                       .select_subclasses()
+
+
+    def get_context_data(self, **kwargs):
+        context = super(PostPending, self).get_context_data(**kwargs)
+
+        post_ctype = ContentType.objects.get_for_model(PostType)
+
+        context['best_voters'] = Vote.objects.values('user__username') \
+            .filter(content_type=post_ctype) \
+            .annotate(votes_count=Count('user')).order_by('-votes_count')[:10]
+
+        context['last_comments'] = ThreadedComment.objects \
+            .filter(content_type=post_ctype).select_related() \
+            .order_by('-created_at')[:10]
+
+        return context
 
 
 def view_revisions(request, cat, slug):
@@ -162,7 +307,7 @@ def select_revision(request, cat, slug, revision):
                                 kwargs={'cat': cat, 'slug': slug}))
 
 
-@permissions_required(privilege='posts.delete_version')
+# @privileges_required('posts.delete_version')
 def delete_revision(request, cat, slug, revision):
     news = get_object_or_404(News, slug=slug)
     rev = get_object_or_404(Version, pk=revision)
@@ -189,40 +334,3 @@ def post_propose(request, post_id):
         post.status = 2
         post.save()
     return HttpResponseRedirect(reverse('posts_draft'))
-
-
-@login_required
-def add_news(request):
-    if request.method == 'POST':
-        form = NewsForm(request.POST, request.FILES, request=request)
-        if form.is_valid():
-            news = form.save()
-            return HttpResponseRedirect(news.get_absolute_url())
-    else:
-        initial = {'reason': _('First version')}
-        from django.forms.models import modelform_factory
-        # form = modelform_factory(News, form=NewsForm, exclude=('status'))
-        form = NewsForm(initial=initial)
-
-    return render(request, 'add_news.html', {'form': form})
-
-
-@login_required
-def edit_news(request, id):
-    news = get_object_or_404(News, pk=id)
-
-    if request.method == 'POST':
-        form = NewsForm(request.POST, request.FILES, instance=news,
-                        request=request)
-        if form.is_valid():
-            news = form.save()
-            return HttpResponseRedirect(news.get_absolute_url())
-    else:
-        initial = {'is_short': int(news.is_short), 'title': news.title,
-                   'content_news': news.last_content,
-                   'category': news.category, 'status': news.status,
-                   'closed_comments': news.closed_comments}
-
-        form = NewsForm(instance=news, initial=initial)
-
-    return render(request, 'add_news.html', {'id': id, 'form': form})

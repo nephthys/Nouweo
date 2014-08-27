@@ -20,12 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.contrib.auth import get_user_model
 from django.contrib.comments.models import Comment
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from posts.models import PostType, News, Picture
-from models import Vote, ThreadedComment
+from .models import KarmaPrivilege, Vote, ThreadedComment
 
 '''
 @receiver(post_save, sender=Rating)
@@ -63,3 +64,9 @@ def count_user_comments(sender, instance, signal, **kwargs):
         user.save()
     except ObjectDoesNotExist:
         pass
+
+@receiver(post_save, sender=KarmaPrivilege)
+@receiver(post_delete, sender=KarmaPrivilege)
+def clear_cache_karma_privileges(sender, instance, signal, **kwargs):
+    cache.delete('global_karma_privileges')
+
