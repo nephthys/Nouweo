@@ -277,7 +277,6 @@ class NewsForm(ModelForm):
         news.save()
 
         if is_short == 0:
-            print 'is_short or not ??'
             version = Version(news=news, author=self.request.user, ip=ip,
                               content=content, is_minor=is_minor,
                               reason=reason, chars_count=len(content))
